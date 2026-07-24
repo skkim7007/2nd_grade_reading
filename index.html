@@ -4,66 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4f46e5">
-    <title>영어 본문 단계별 학습</title>
+    <title>ENG MASTER - 본문 완전 정복</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Google Fonts (Jua 폰트 추가로 게임 느낌 강조) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Tone.js (효과음) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas Confetti (폭죽 파티클) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
         body {
-            font-family: 'Inter', 'Noto Sans KR', sans-serif;
-            background-color: #f1f5f9;
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            /* 귀여운 도트 패턴 배경 */
+            background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
+            background-size: 30px 30px;
             color: #1e293b;
+            overflow-x: hidden;
         }
 
-        /* 네오 브루탈리즘 (게임 스타일) UI */
+        .font-game {
+            font-family: 'Jua', sans-serif;
+        }
+
+        /* 3D 네오 브루탈리즘 (게임 스타일) UI */
         .game-box {
-            border: 4px solid #1e293b;
-            box-shadow: 4px 4px 0px #1e293b;
-            border-radius: 16px;
+            background-color: #ffffff;
+            border: 4px solid #0f172a;
+            box-shadow: 6px 6px 0px #0f172a;
+            border-radius: 20px;
         }
 
         .game-btn {
-            border: 4px solid #1e293b;
-            box-shadow: 4px 4px 0px #1e293b;
+            border: 4px solid #0f172a;
+            box-shadow: 0px 6px 0px #0f172a;
             transition: all 0.1s ease-in-out;
             cursor: pointer;
+            position: relative;
+            top: 0;
         }
 
-        .game-btn:active {
-            transform: translate(4px, 4px);
-            box-shadow: 0px 0px 0px #1e293b;
+        .game-btn:active, .game-btn.pressed {
+            top: 6px;
+            box-shadow: 0px 0px 0px #0f172a;
         }
 
         .game-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
-            box-shadow: 4px 4px 0px #1e293b;
+            top: 0;
+            box-shadow: 0px 6px 0px #0f172a;
         }
 
-        /* 드래그, 복사 방지 */
-        .game-btn,
-        .word-block,
-        .select-none {
-            user-select: none;
-            -webkit-user-select: none;
+        /* 슬라임 대기 애니메이션 (통통 튀기) */
+        @keyframes slimeIdle {
+            0%, 100% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.05, 0.95) translateY(5px); }
+        }
+        .slime-anim {
+            animation: slimeIdle 2s infinite ease-in-out;
         }
 
-        :focus-visible {
-            outline: 4px solid #f59e0b;
-            outline-offset: 3px;
+        /* 오답 시 흔들림 효과 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px) rotate(-2deg); }
+            50% { transform: translateX(8px) rotate(2deg); }
+            75% { transform: translateX(-8px) rotate(-2deg); }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
         }
 
-        /* 코인 애니메이션 */
-        @keyframes floatUp {
-            0% { opacity: 0; transform: translateY(0) scale(0.8); }
-            20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
-            80% { opacity: 1; transform: translateY(-40px) scale(1); }
-            100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+        /* 팝업 등장 효과 */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            70% { transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 코인 획득 애니메이션 */
+        @keyframes floatUpAndFade {
+            0% { opacity: 0; transform: translateY(20px) scale(0.5); }
+            20% { opacity: 1; transform: translateY(-10px) scale(1.2); }
+            80% { opacity: 1; transform: translateY(-30px) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(0.5); }
         }
         
         .coin-popup {
@@ -71,42 +104,46 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 2rem;
-            font-weight: 900;
+            font-size: 3rem;
+            font-family: 'Jua', sans-serif;
             color: #fbbf24;
-            text-shadow: 2px 2px 0 #b45309, -2px -2px 0 #b45309, 2px -2px 0 #b45309, -2px 2px 0 #b45309;
-            animation: floatUp 1.2s ease-out forwards;
+            text-shadow: 3px 3px 0 #b45309, -3px -3px 0 #b45309, 3px -3px 0 #b45309, -3px 3px 0 #b45309;
+            animation: floatUpAndFade 1.2s ease-out forwards;
             pointer-events: none;
             z-index: 9999;
         }
 
-        /* 블록 스타일 */
         .word-block {
-            border: 3px solid #1e293b;
-            box-shadow: 2px 2px 0px #1e293b;
-            transition: transform 0.1s;
+            border: 3px solid #0f172a;
+            box-shadow: 0px 4px 0px #0f172a;
+            transition: all 0.1s;
+            cursor: pointer;
         }
-        
         .word-block:active {
-            transform: translate(2px, 2px);
-            box-shadow: 0px 0px 0px #1e293b;
+            transform: translateY(4px);
+            box-shadow: 0px 0px 0px #0f172a;
         }
 
-        /* 아바타 슬라임 모양 */
+        .game-btn, .word-block, .select-none {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 슬라임 본체 모양 */
         .slime {
             width: 80px;
             height: 70px;
             border-radius: 50% 50% 10% 10% / 60% 60% 10% 10%;
-            border: 4px solid #1e293b;
-            box-shadow: 4px 4px 0px #1e293b;
+            border: 4px solid #0f172a;
+            box-shadow: 0px 5px 0px rgba(0,0,0,0.2) inset, 0px 6px 0px #0f172a;
             position: relative;
-            background-color: #a7f3d0; /* 기본색 */
+            background-color: #a7f3d0;
         }
         
         .slime::after, .slime::before {
             content: '';
             position: absolute;
-            background: #1e293b;
+            background: #0f172a;
             border-radius: 50%;
             width: 10px;
             height: 10px;
@@ -123,120 +160,152 @@
             pointer-events: none;
         }
 
-        /* 힌트 밑줄 스타일 (끊김 방지용 border-bottom 사용) */
+        /* 힌트 밑줄 */
         .error-group {
-            border-bottom: 4px solid #f43f5e; /* Rose-500 */
-            color: #e11d48; /* Rose-600 */
+            border-bottom: 4px wavy #f43f5e;
+            color: #e11d48;
             display: inline-block;
             margin: 0 2px;
             padding-bottom: 2px;
         }
 
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                scroll-behavior: auto !important;
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
+        /* 토스트 알림창 */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
         }
+        .toast-msg {
+            background: #0f172a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 99px;
+            font-family: 'Jua', sans-serif;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideDownFade 0.3s ease-out forwards, fadeOutUp 0.3s ease-in 2.7s forwards;
+        }
+        @keyframes slideDownFade {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOutUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
+    <!-- 토스트 알림 컨테이너 -->
+    <div id="toast-container"></div>
+
     <!-- 1. 로그인 페이지 -->
-    <div id="page-login" class="w-full max-w-md flex flex-col items-center justify-center mt-10">
-        <div class="bg-white p-8 game-box w-full">
-            <h1 class="text-3xl font-black text-center text-indigo-600 mb-2">ENG MASTER 🎮</h1>
+    <div id="page-login" class="w-full max-w-md flex flex-col items-center justify-center mt-10 pop-in">
+        <div class="bg-white p-8 game-box w-full text-center relative overflow-hidden">
+            <!-- 배경 장식 -->
+            <div class="absolute -top-10 -left-10 text-6xl opacity-10">🎮</div>
+            <div class="absolute -bottom-10 -right-10 text-6xl opacity-10">✨</div>
+            
+            <h1 class="text-5xl font-game text-indigo-600 mb-2 drop-shadow-md">ENG MASTER</h1>
             <p class="text-center text-slate-500 font-bold mb-8">영어 본문 완전 정복!</p>
             
-            <div class="mb-4">
-                <label for="input-id" class="block text-slate-700 font-bold mb-2">학번</label>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예: 20101" autocomplete="username">
+            <div class="mb-4 text-left">
+                <label for="input-id" class="block text-slate-700 font-bold mb-2 ml-1">학번</label>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 20101" autocomplete="off">
             </div>
-            <div class="mb-8">
-                <label for="input-name" class="block text-slate-700 font-bold mb-2">닉네임</label>
-                <input type="text" id="input-name" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예: 영어마스터" autocomplete="nickname">
+            <div class="mb-8 text-left">
+                <label for="input-name" class="block text-slate-700 font-bold mb-2 ml-1">닉네임</label>
+                <input type="text" id="input-name" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 닉네임을 입력하세요" autocomplete="off">
             </div>
             
-            <button onclick="login()" class="game-btn w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black text-xl py-4 rounded-xl">
-                게임 시작! 🚀
+            <button onclick="login()" class="game-btn w-full bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-game text-2xl py-4 rounded-xl flex justify-center items-center gap-2">
+                게임 시작하기 <i class="fas fa-play"></i>
             </button>
         </div>
     </div>
 
     <!-- 2. 단원 선택 페이지 -->
-    <div id="page-unit" class="hidden w-full max-w-3xl flex-col items-center">
+    <div id="page-unit" class="hidden w-full max-w-3xl flex-col items-center pop-in">
         <!-- 상단 유저 정보 및 상점 바 -->
         <div class="w-full flex justify-between items-center bg-white p-4 game-box mb-6">
             <div class="flex items-center gap-4">
-                <div id="mini-avatar" class="slime" style="transform: scale(0.6); margin: -15px;">
-                    <div class="item-slot" id="mini-item"></div>
+                <div class="slime-anim">
+                    <div id="mini-avatar" class="slime" style="transform: scale(0.65); margin: -10px; transform-origin: center;">
+                        <div class="item-slot" id="mini-item"></div>
+                    </div>
                 </div>
                 <div>
                     <div id="user-info-display" class="font-black text-slate-800 text-lg"></div>
-                    <div class="text-amber-500 font-black flex items-center gap-1">
+                    <div class="text-amber-500 font-game text-xl flex items-center gap-1 drop-shadow-sm">
                         <i class="fas fa-coins"></i> <span id="coin-display">0</span> 코인
                     </div>
                 </div>
             </div>
-            <button onclick="showPage('page-shop')" class="game-btn bg-amber-400 text-amber-900 px-4 py-2 rounded-xl font-black flex items-center gap-2">
+            <button onclick="showPage('page-shop')" class="game-btn bg-amber-400 text-amber-900 px-4 py-3 rounded-xl font-game text-lg flex items-center gap-2">
                 <i class="fas fa-store"></i> 상점 가기
             </button>
         </div>
 
-        <h2 class="text-3xl font-black text-slate-800 mb-6">단원 선택 📚</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <h2 class="text-4xl font-game text-slate-800 mb-6 drop-shadow-sm">단원 선택 📚</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
             <button onclick="selectUnit(5)" class="game-btn bg-white hover:bg-indigo-50 p-6 rounded-2xl flex flex-col items-center justify-center">
-                <span class="text-4xl mb-2">🏞️</span>
-                <span class="text-2xl font-black text-slate-800">5단원</span>
+                <span class="text-5xl mb-3 drop-shadow-md">🏞️</span>
+                <span class="text-3xl font-game text-slate-800">5단원</span>
                 <span class="text-slate-500 font-bold mt-1">나의 고향, 춘천</span>
             </button>
             <button onclick="selectUnit(6)" class="game-btn bg-white hover:bg-indigo-50 p-6 rounded-2xl flex flex-col items-center justify-center">
-                <span class="text-4xl mb-2">🛹</span>
-                <span class="text-2xl font-black text-slate-800">6단원</span>
+                <span class="text-5xl mb-3 drop-shadow-md">🛹</span>
+                <span class="text-3xl font-game text-slate-800">6단원</span>
                 <span class="text-slate-500 font-bold mt-1">첫 스케이트보드</span>
             </button>
             <button onclick="selectUnit(7)" class="game-btn bg-white hover:bg-indigo-50 p-6 rounded-2xl flex flex-col items-center justify-center">
-                <span class="text-4xl mb-2">🐻‍❄️</span>
-                <span class="text-2xl font-black text-slate-800">7단원</span>
+                <span class="text-5xl mb-3 drop-shadow-md">🐻‍❄️</span>
+                <span class="text-3xl font-game text-slate-800">7단원</span>
                 <span class="text-slate-500 font-bold mt-1">추운 곳에 사는 동물들</span>
             </button>
             <button onclick="selectUnit(8)" class="game-btn bg-white hover:bg-indigo-50 p-6 rounded-2xl flex flex-col items-center justify-center">
-                <span class="text-4xl mb-2">💰</span>
-                <span class="text-2xl font-black text-slate-800">8단원</span>
+                <span class="text-5xl mb-3 drop-shadow-md">💰</span>
+                <span class="text-3xl font-game text-slate-800">8단원</span>
                 <span class="text-slate-500 font-bold mt-1">가격 비교하기</span>
             </button>
         </div>
     </div>
 
     <!-- 3. 학습 모드 선택 페이지 -->
-    <div id="page-mode" class="hidden w-full max-w-3xl flex-col items-center">
+    <div id="page-mode" class="hidden w-full max-w-3xl flex-col items-center pop-in">
         <div class="w-full flex items-center mb-6">
             <button onclick="showPage('page-unit')" class="game-btn bg-white p-3 rounded-xl font-bold"><i class="fas fa-arrow-left"></i> 뒤로</button>
-            <h2 id="mode-title" class="text-2xl font-black text-slate-800 flex-1 text-center pr-12"></h2>
+            <h2 id="mode-title" class="text-3xl font-game text-slate-800 flex-1 text-center pr-12 drop-shadow-sm"></h2>
         </div>
         
         <div class="flex flex-col gap-4 w-full">
-            <button onclick="selectMode(1)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-4"><span class="text-3xl">👀</span><span class="text-xl font-black text-slate-700">1. 한 줄 해석 읽기</span></div>
-                <i class="fas fa-chevron-right text-slate-300"></i>
+            <button onclick="selectMode(1)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between group hover:bg-indigo-50">
+                <div class="flex items-center gap-4"><span class="text-4xl drop-shadow-md transform group-hover:scale-110 transition">👀</span><span class="text-2xl font-game text-slate-700">1. 한 줄 해석 읽기</span></div>
+                <i class="fas fa-chevron-right text-slate-300 text-2xl"></i>
             </button>
-            <button onclick="selectMode(2)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-4"><span class="text-3xl">⌨️</span><span class="text-xl font-black text-slate-700">2. 영어 문장 따라 쓰기</span></div>
-                <i class="fas fa-chevron-right text-slate-300"></i>
+            <button onclick="selectMode(2)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between group hover:bg-indigo-50">
+                <div class="flex items-center gap-4"><span class="text-4xl drop-shadow-md transform group-hover:scale-110 transition">⌨️</span><span class="text-2xl font-game text-slate-700">2. 영어 문장 따라 쓰기</span></div>
+                <i class="fas fa-chevron-right text-slate-300 text-2xl"></i>
             </button>
-            <button onclick="selectMode(3)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-4"><span class="text-3xl">🧩</span><span class="text-xl font-black text-slate-700">3. 구(phrase) 배열하기</span></div>
-                <i class="fas fa-chevron-right text-slate-300"></i>
+            <button onclick="selectMode(3)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between group hover:bg-indigo-50">
+                <div class="flex items-center gap-4"><span class="text-4xl drop-shadow-md transform group-hover:scale-110 transition">🧩</span><span class="text-2xl font-game text-slate-700">3. 구(phrase) 배열하기</span></div>
+                <i class="fas fa-chevron-right text-slate-300 text-2xl"></i>
             </button>
-            <button onclick="selectMode(4)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-4"><span class="text-3xl">🔤</span><span class="text-xl font-black text-slate-700">4. 단어 배열하기</span></div>
-                <i class="fas fa-chevron-right text-slate-300"></i>
+            <button onclick="selectMode(4)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between group hover:bg-indigo-50">
+                <div class="flex items-center gap-4"><span class="text-4xl drop-shadow-md transform group-hover:scale-110 transition">🔤</span><span class="text-2xl font-game text-slate-700">4. 단어 배열하기</span></div>
+                <i class="fas fa-chevron-right text-slate-300 text-2xl"></i>
             </button>
-            <button onclick="selectMode(5)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-4"><span class="text-3xl">✍️</span><span class="text-xl font-black text-slate-700">5. 영작하기</span></div>
-                <i class="fas fa-chevron-right text-slate-300"></i>
+            <button onclick="selectMode(5)" class="game-btn bg-white p-5 rounded-2xl flex items-center justify-between group hover:bg-indigo-50">
+                <div class="flex items-center gap-4"><span class="text-4xl drop-shadow-md transform group-hover:scale-110 transition">✍️</span><span class="text-2xl font-game text-slate-700">5. 영작하기</span></div>
+                <i class="fas fa-chevron-right text-slate-300 text-2xl"></i>
             </button>
         </div>
     </div>
@@ -248,16 +317,19 @@
             <button onclick="showPage('page-mode')" class="game-btn bg-rose-500 text-white px-4 py-2 rounded-xl font-black whitespace-nowrap">
                 <i class="fas fa-times"></i> 그만하기
             </button>
-            <div id="progress-track" class="bg-slate-200 h-4 rounded-full flex-1 mx-4 border-2 border-slate-800 overflow-hidden" role="progressbar" aria-label="학습 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div id="progress-bar" class="bg-emerald-400 w-0 h-full transition-all duration-300"></div>
+            <div id="progress-track" class="bg-slate-200 h-6 rounded-full flex-1 mx-4 border-4 border-slate-800 overflow-hidden relative shadow-inner" role="progressbar" aria-label="학습 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="progress-bar" class="bg-emerald-400 w-0 h-full transition-all duration-500 relative">
+                    <!-- 반짝임 효과 -->
+                    <div class="absolute top-0 left-0 right-0 bottom-0 bg-white opacity-20 transform -skew-x-12"></div>
+                </div>
             </div>
-            <div id="progress-text" class="font-black text-slate-600 whitespace-nowrap">0 / 0</div>
+            <div id="progress-text" class="font-game text-xl text-slate-700 whitespace-nowrap">0 / 0</div>
         </div>
 
         <!-- 질문 박스 -->
-        <div class="w-full bg-white game-box p-6 mb-6">
-            <div id="question-ko" class="text-xl font-black text-indigo-600 mb-4 text-center break-keep"></div>
-            <div id="question-en-hint" class="text-lg font-bold text-slate-500 text-center select-none bg-slate-50 p-3 rounded-xl mb-4 hidden"></div>
+        <div id="question-container" class="w-full bg-white game-box p-6 mb-6 transition-transform">
+            <div id="question-ko" class="text-2xl font-black text-indigo-700 mb-4 text-center break-keep leading-snug"></div>
+            <div id="question-en-hint" class="text-lg font-bold text-slate-500 text-center select-none bg-slate-50 p-4 rounded-xl mb-4 hidden border-2 border-dashed border-slate-200"></div>
             
             <!-- 인터랙티브 영역 (모드에 따라 변경됨) -->
             <div id="interactive-area" class="w-full min-h-[150px] flex flex-col items-center justify-center">
@@ -266,17 +338,17 @@
 
             <!-- 피드백 메시지 & 힌트 영역 -->
             <div id="hint-area" class="w-full mt-4"></div>
-            <div id="feedback-message" class="hidden text-center mt-4" role="status" aria-live="polite"></div>
+            <div id="feedback-message" class="hidden text-center mt-4 pop-in" role="status" aria-live="polite"></div>
 
             <!-- 하단 버튼들 -->
             <div class="flex gap-3 mt-6 w-full">
-                <button id="btn-hint" onclick="showHint()" class="hidden game-btn flex-1 bg-amber-400 hover:bg-amber-500 text-amber-900 font-black text-lg py-4 rounded-xl">
-                    <i class="fas fa-lightbulb"></i> 힌트 보기
+                <button id="btn-hint" onclick="showHint()" class="hidden game-btn flex-1 bg-amber-400 hover:bg-amber-500 text-amber-900 font-game text-xl py-4 rounded-xl">
+                    <i class="fas fa-search"></i> 힌트 보기
                 </button>
-                <button id="btn-check" onclick="checkAnswer()" class="game-btn flex-[2] bg-indigo-500 hover:bg-indigo-600 text-white font-black text-xl py-4 rounded-xl">
+                <button id="btn-check" onclick="checkAnswer()" class="game-btn flex-[2] bg-indigo-500 hover:bg-indigo-600 text-white font-game text-2xl py-4 rounded-xl">
                     정답 확인 <i class="fas fa-check"></i>
                 </button>
-                <button id="btn-next" onclick="nextQuestion()" class="hidden game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xl py-4 rounded-xl">
+                <button id="btn-next" onclick="nextQuestion()" class="hidden game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-game text-2xl py-4 rounded-xl">
                     다음으로 <i class="fas fa-arrow-right ml-1"></i>
                 </button>
             </div>
@@ -284,55 +356,66 @@
     </div>
 
     <!-- 5. 상점 페이지 -->
-    <div id="page-shop" class="hidden w-full max-w-3xl flex-col items-center">
+    <div id="page-shop" class="hidden w-full max-w-4xl flex-col items-center pop-in">
         <div class="w-full flex items-center justify-between mb-6 bg-white p-3 rounded-2xl game-box">
             <button onclick="showPage('page-unit')" class="game-btn bg-slate-200 px-4 py-2 rounded-xl font-bold whitespace-nowrap"><i class="fas fa-arrow-left"></i> 나가기</button>
-            <h2 class="text-2xl font-black text-center text-slate-800 whitespace-nowrap mx-2">아바타 상점 🛒</h2>
-            <div class="bg-amber-100 text-amber-900 px-3 py-2 rounded-xl font-black border-4 border-amber-300 whitespace-nowrap">
+            <h2 class="text-3xl font-game text-center text-slate-800 whitespace-nowrap mx-2">아바타 상점 🛒</h2>
+            <div class="bg-amber-100 text-amber-900 px-4 py-2 rounded-xl font-game text-xl border-4 border-amber-300 whitespace-nowrap drop-shadow-sm">
                 <i class="fas fa-coins"></i> <span id="shop-coin-display">0</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
-            <!-- 내 아바타 미리보기 -->
-            <div class="md:col-span-2 bg-white p-6 rounded-3xl game-box flex flex-col items-center justify-center relative">
-                <h3 class="font-black text-xl mb-6 text-slate-500">캐릭터 꾸미기</h3>
-                <div id="preview-avatar" class="slime scale-[2] mb-12 mt-8">
-                    <div class="item-slot" id="preview-item"></div>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 w-full">
+            <!-- 내 아바타 미리보기 패널 -->
+            <div class="md:col-span-2 bg-white p-6 rounded-3xl game-box flex flex-col items-center justify-start relative h-[600px] overflow-hidden">
+                <h3 class="font-game text-2xl mb-8 text-slate-500">피팅룸 ✨</h3>
+                
+                <div class="slime-anim mb-12 mt-8">
+                    <div id="preview-avatar" class="slime scale-[2.2] transform-origin-top">
+                        <div class="item-slot" id="preview-item"></div>
+                    </div>
                 </div>
                 
                 <!-- 위치/크기 조절 컨트롤 -->
-                <div id="position-controls" class="w-full bg-indigo-50 p-3 rounded-xl border-2 border-indigo-200 mt-2 mb-4 hidden">
-                    <div class="text-sm font-bold text-indigo-700 mb-2 text-center"><i class="fas fa-arrows-alt"></i> 장식 위치/크기 조절</div>
-                    <div class="grid grid-cols-4 gap-2 text-center">
-                        <button onclick="moveItem('x', -5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-left"></i></button>
-                        <button onclick="moveItem('y', -5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-up"></i></button>
-                        <button onclick="moveItem('y', 5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-down"></i></button>
-                        <button onclick="moveItem('x', 5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-right"></i></button>
+                <div id="position-controls" class="w-full bg-slate-50 p-4 rounded-2xl border-4 border-slate-200 mt-auto hidden pop-in">
+                    <div class="text-base font-bold text-slate-700 mb-3 text-center flex items-center justify-center gap-2">
+                        <i class="fas fa-arrows-alt"></i> 아이템 조절기
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <button onclick="moveItem('s', -0.1)" class="game-btn bg-white rounded-lg p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-minus"></i> 작게</button>
-                        <button onclick="moveItem('s', 0.1)" class="game-btn bg-white rounded-lg p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-plus"></i> 크게</button>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-center mb-3">
+                        <button onclick="moveItem('x', -3)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-lg"><i class="fas fa-arrow-left"></i></button>
+                        <button onclick="moveItem('y', -3)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-lg"><i class="fas fa-arrow-up"></i></button>
+                        <button onclick="moveItem('y', 3)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-lg"><i class="fas fa-arrow-down"></i></button>
+                        <button onclick="moveItem('x', 3)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-lg"><i class="fas fa-arrow-right"></i></button>
                     </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button onclick="moveItem('s', -0.1)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-minus"></i> 작게</button>
+                        <button onclick="moveItem('s', 0.1)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-plus"></i> 크게</button>
+                    </div>
+                    
+                    <!-- 현재 선택된 장식 삭제 버튼 (다중 장착용) -->
+                    <button id="btn-remove-acc" onclick="removeSelectedAcc()" class="hidden game-btn w-full bg-rose-100 hover:bg-rose-200 border-rose-300 text-rose-700 font-bold py-2 rounded-xl text-sm">
+                        <i class="fas fa-trash-alt"></i> 이 장식 빼기
+                    </button>
                 </div>
 
-                <button id="btn-buy-equip" class="game-btn w-full bg-slate-200 text-slate-500 font-black py-4 rounded-xl cursor-not-allowed">
+                <button id="btn-buy-equip" class="game-btn w-full bg-slate-200 text-slate-500 font-game text-xl py-4 rounded-xl mt-4 cursor-not-allowed">
                     아이템을 선택하세요
                 </button>
             </div>
 
-            <!-- 상점 탭 및 목록 -->
-            <div class="md:col-span-3 bg-white p-4 rounded-3xl game-box flex flex-col h-[600px]">
+            <!-- 상점 탭 및 목록 패널 -->
+            <div class="md:col-span-3 bg-white p-5 rounded-3xl game-box flex flex-col h-[600px]">
                 <!-- 탭 버튼들 -->
                 <div class="flex overflow-x-auto gap-2 mb-4 pb-2 scrollbar-hide" style="scrollbar-width: none;">
-                    <button id="tab-colors" onclick="changeShopTab('colors')" class="shop-tab-btn active-tab bg-indigo-500 text-white px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-indigo-700">색상</button>
-                    <button id="tab-hats" onclick="changeShopTab('hats')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">머리</button>
-                    <button id="tab-faces" onclick="changeShopTab('faces')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">얼굴</button>
-                    <button id="tab-accs" onclick="changeShopTab('accs')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">장식</button>
+                    <button id="tab-colors" onclick="changeShopTab('colors')" class="shop-tab-btn active-tab bg-indigo-500 text-white px-5 py-3 rounded-xl font-game text-xl whitespace-nowrap border-b-4 border-indigo-700 transition">🎨 색상</button>
+                    <button id="tab-hats" onclick="changeShopTab('hats')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-5 py-3 rounded-xl font-game text-xl whitespace-nowrap border-b-4 border-slate-300 transition">🧢 머리</button>
+                    <button id="tab-faces" onclick="changeShopTab('faces')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-5 py-3 rounded-xl font-game text-xl whitespace-nowrap border-b-4 border-slate-300 transition">👓 얼굴</button>
+                    <button id="tab-accs" onclick="changeShopTab('accs')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-5 py-3 rounded-xl font-game text-xl whitespace-nowrap border-b-4 border-slate-300 transition">✨ 장식(여러개)</button>
                 </div>
                 
                 <!-- 아이템 리스트 -->
-                <div id="shop-content" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto pr-2 pb-4 flex-1">
+                <div id="shop-content" class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto pr-2 pb-4 flex-1">
                     <!-- JS로 렌더링됨 -->
                 </div>
             </div>
@@ -340,9 +423,60 @@
     </div>
 
     <script>
-        // ---------------- [선생님을 위한 안내] ----------------
         // 구글 앱스 스크립트 '웹 앱 URL'
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxLhH__yibJqs7QxehYF83xBcT_UTIQNBl5dOEnZRcjSqqcNcE59fnvhBPh-WizWEdT/exec";
+
+        // 사운드 시스템 (Tone.js)
+        let synth = null;
+        let isAudioInitialized = false;
+
+        function initAudio() {
+            if (isAudioInitialized) return;
+            synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            synth.volume.value = -10; // 볼륨 조절
+            isAudioInitialized = true;
+        }
+
+        // 화면 터치 시 오디오 컨텍스트 초기화 (브라우저 정책 우회)
+        document.body.addEventListener('pointerdown', initAudio, { once: true });
+
+        function playSound(type) {
+            if (!synth) return;
+            if (Tone.context.state !== 'running') Tone.context.resume();
+            
+            const now = Tone.now();
+            if (type === 'click') {
+                synth.triggerAttackRelease("C5", "32n", now);
+            } else if (type === 'correct') {
+                synth.triggerAttackRelease(["C5", "E5", "G5"], "8n", now);
+            } else if (type === 'wrong') {
+                synth.triggerAttackRelease(["C4", "C#4"], "8n", now);
+            } else if (type === 'coin') {
+                synth.triggerAttackRelease("B5", "16n", now);
+                synth.triggerAttackRelease("E6", "8n", now + 0.1);
+            } else if (type === 'tada') {
+                synth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now);
+                synth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "4n", now + 0.2);
+            }
+        }
+
+        // 토스트 알림창 함수 (alert 대체)
+        function showToast(message, isError = false) {
+            playSound(isError ? 'wrong' : 'click');
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            if(isError) toast.style.backgroundColor = '#e11d48'; // 에러는 빨간색
+            toast.innerHTML = (isError ? '⚠️ ' : '💬 ') + message;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                if(toast.parentElement) toast.remove();
+            }, 3000);
+        }
 
         // 본문 데이터 (5, 6, 7, 8단원 전체 완벽 수록)
         const db = {
@@ -465,18 +599,17 @@
         let arrangedBlocks = [];
         let failedAttempt = false;
 
-        // 게임화(상점, 코인) 데이터
+        // 게임화 데이터 (accs를 배열로 관리하여 여러개 장착 지원)
         let coins = 0;
         let myAvatar = { 
-            color: '#a7f3d0', hat: '', face: '', acc: '',
-            offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4}, acc: {x:-35, y:20, s:1.4} }
+            color: '#a7f3d0', hat: '', face: '', accs: [],
+            offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4} }
         };
         let purchasedItems = []; 
         let currentShopTab = 'colors';
         
-        // 상점 미리보기용 상태 변수
         let previewAvatar = null;
-        let selectedShopItem = null;
+        let selectedShopItem = null; // { type, index(if acc), item }
         
         function loadSaveData(id) {
             const saved = localStorage.getItem('eng_master_' + id);
@@ -492,19 +625,26 @@
                 coins = Number.isFinite(parsed.coins) && parsed.coins >= 0 ? parsed.coins : 0;
                 myAvatar = parsed.avatar && typeof parsed.avatar === 'object'
                     ? parsed.avatar
-                    : { color: '#a7f3d0', hat: '', face: '', acc: '' };
+                    : { color: '#a7f3d0', hat: '', face: '', accs: [] };
                 purchasedItems = Array.isArray(parsed.purchased) ? parsed.purchased : [];
-                // 구버전 마이그레이션 방어코드
+                
+                // 구버전 마이그레이션 (과거 버전 호환)
                 if(myAvatar.item !== undefined) { myAvatar.hat = myAvatar.item; delete myAvatar.item; }
-                // 위치 오프셋 데이터가 없으면 기본값 세팅
+                if(!myAvatar.accs) myAvatar.accs = [];
+                // 만약 과거에 단일 acc가 문자열로 있었다면 배열로 변환
+                if(myAvatar.acc && typeof myAvatar.acc === 'string' && myAvatar.acc !== '') {
+                    myAvatar.accs.push({ icon: myAvatar.acc, x:-35, y:20, s:1.4 });
+                    myAvatar.acc = '';
+                }
+                
                 if(!myAvatar.offsets) {
-                    myAvatar.offsets = { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4}, acc: {x:-35, y:20, s:1.4} };
+                    myAvatar.offsets = { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4} };
                 }
             } else {
                 coins = 0;
                 myAvatar = { 
-                    color: '#a7f3d0', hat: '', face: '', acc: '',
-                    offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4}, acc: {x:-35, y:20, s:1.4} }
+                    color: '#a7f3d0', hat: '', face: '', accs: [],
+                    offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4} }
                 };
                 purchasedItems = [];
             }
@@ -521,6 +661,13 @@
             }));
         }
 
+        // 클릭음 글로벌 바인딩 (모든 버튼에 적용)
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.game-btn') || e.target.closest('.word-block') || e.target.closest('.shop-tab-btn')) {
+                playSound('click');
+            }
+        });
+
         function showPage(pageId) {
             document.querySelectorAll('body > div[id^="page-"]').forEach(el => el.classList.add('hidden'));
             const nextPage = document.getElementById(pageId);
@@ -531,11 +678,9 @@
             
             if (pageId === 'page-shop') {
                 document.getElementById('shop-coin-display').innerText = coins;
-                // 상점 입장 시 내 아바타 정보를 미리보기에 복사
                 previewAvatar = JSON.parse(JSON.stringify(myAvatar));
+                if(!previewAvatar.accs) previewAvatar.accs = [];
                 selectedShopItem = null;
-                
-                // 상점 탭 초기화 (동기화 이슈 방지)
                 changeShopTab('colors');
             }
         }
@@ -543,12 +688,19 @@
         function login() {
             const id = document.getElementById('input-id').value.trim();
             const name = document.getElementById('input-name').value.trim();
-            if (!id || !name) { alert("학번과 닉네임을 입력해주세요!"); return; }
-            if (!/^\d+$/.test(id)) { alert("학번은 숫자만 입력해주세요!"); return; }
+            if (!id || !name) { 
+                showToast("학번과 닉네임을 모두 입력해주세요!", true); 
+                return; 
+            }
+            if (!/^\d+$/.test(id)) { 
+                showToast("학번은 숫자만 입력해주세요!", true); 
+                return; 
+            }
             
             studentData = { id, name };
             document.getElementById('user-info-display').innerText = `${id} ${name}`;
             loadSaveData(id);
+            playSound('correct');
             showPage('page-unit');
         }
 
@@ -564,7 +716,7 @@
             currentQuestionIndex = 0;
             
             if (currentQuestions.length === 0) {
-                alert("해당 단원의 데이터가 없습니다."); return;
+                showToast("해당 단원의 데이터가 없습니다.", true); return;
             }
             
             document.getElementById('btn-next').classList.add('hidden');
@@ -590,7 +742,11 @@
             updateProgress();
             failedAttempt = false;
             document.getElementById('btn-hint').classList.add('hidden');
+            
             const q = currentQuestions[currentQuestionIndex];
+            const qContainer = document.getElementById('question-container');
+            qContainer.classList.remove('shake');
+            
             document.getElementById('question-ko').innerText = q.ko;
             
             const hintEn = document.getElementById('question-en-hint');
@@ -608,22 +764,23 @@
             document.getElementById('btn-next').classList.add('hidden');
 
             if (currentMode === 1) {
-                hintEn.classList.add('text-indigo-600', 'text-2xl', 'font-black');
+                hintEn.classList.add('text-indigo-600', 'text-3xl', 'font-game', 'border-indigo-200', 'bg-indigo-50');
                 document.getElementById('btn-check').classList.add('hidden');
                 document.getElementById('btn-next').classList.remove('hidden');
-                document.getElementById('btn-next').innerText = "다음 읽기";
-                area.classList.add('hidden'); // 학습하기 1번 모드 공백 제거
+                document.getElementById('btn-next').innerHTML = "다음 읽기 <i class='fas fa-arrow-right ml-1'></i>";
+                area.classList.add('hidden'); 
             } else {
-                area.classList.remove('hidden'); // 다른 모드에서는 영역 다시 표시
+                hintEn.classList.remove('text-indigo-600', 'text-3xl', 'font-game', 'border-indigo-200', 'bg-indigo-50');
+                area.classList.remove('hidden'); 
+                
                 if (currentMode === 2 || currentMode === 5) {
                     if (currentMode === 5) hintEn.classList.add('hidden');
                     
-                    // 영작/따라쓰기 모드 입력칸 생성
-                    area.innerHTML = '<label for="answer-input" class="sr-only">영어 문장 정답</label><input type="text" id="answer-input" class="w-full border-4 border-slate-800 rounded-xl p-4 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="여기에 정답을 입력하세요" autocomplete="off" autocapitalize="off" spellcheck="false">';
+                    area.innerHTML = '<label for="answer-input" class="sr-only">영어 문장 정답</label><input type="text" id="answer-input" class="w-full border-4 border-slate-800 rounded-xl p-4 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors shadow-inner" placeholder="여기에 정답을 입력하세요" autocomplete="off" autocapitalize="off" spellcheck="false">';
                     
                     const answerInput = document.getElementById('answer-input');
-                    // 복사/붙여넣기 방지
-                    answerInput.onpaste = function(e) { e.preventDefault(); };
+                    // 복사 붙여넣기 차단
+                    answerInput.onpaste = function(e) { e.preventDefault(); showToast("붙여넣기는 안 돼요! 직접 타자를 쳐보세요 😉", true); };
                     answerInput.oncopy = function(e) { e.preventDefault(); };
                     answerInput.onkeydown = function(e) {
                         if (e.key === 'Enter') {
@@ -647,15 +804,15 @@
                     
                     const poolDiv = document.createElement('div');
                     poolDiv.id = 'word-pool';
-                    poolDiv.className = 'flex flex-wrap justify-center gap-3 w-full mb-6 p-4 bg-slate-100 rounded-xl border-4 border-slate-200 min-h-[80px]';
+                    poolDiv.className = 'flex flex-wrap justify-center gap-3 w-full mb-6 p-4 bg-slate-100 rounded-2xl border-4 border-slate-200 min-h-[80px] shadow-inner';
                     
                     const answerDiv = document.createElement('div');
                     answerDiv.id = 'answer-board';
-                    answerDiv.className = 'flex flex-wrap justify-center gap-3 w-full p-4 bg-indigo-50 rounded-xl border-4 border-indigo-200 min-h-[100px] border-dashed';
+                    answerDiv.className = 'flex flex-wrap justify-center gap-3 w-full p-4 bg-indigo-50 rounded-2xl border-4 border-indigo-200 min-h-[100px] border-dashed shadow-inner';
                     
                     shuffled.forEach(w => {
                         const btn = document.createElement('button');
-                        btn.className = 'word-block bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2 rounded-lg text-lg';
+                        btn.className = 'word-block bg-white hover:bg-slate-50 text-slate-800 font-bold px-4 py-2 rounded-xl text-lg';
                         btn.innerText = w;
                         btn.onclick = function() {
                             if (btn.parentElement.id === 'word-pool') {
@@ -676,14 +833,20 @@
             }
         }
 
+        // 아주 중요한 무작위 섞기 함수 (버그 픽스)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function cleanString(str) {
             return str.replace(/[.,!?“”"'‘’]/g, '').toLowerCase().trim();
         }
-
         function escapeHTML(value) {
-            return String(value).replace(/[&<>"']/g, char => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            })[char]);
+            return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
         }
 
         function checkAnswer() {
@@ -693,24 +856,39 @@
             if (currentMode === 2 || currentMode === 5) {
                 const input = document.getElementById('answer-input').value;
                 if(cleanString(input) === cleanString(q.en)) isCorrect = true;
-            } else if (currentMode === 3) {
-                const correctArr = q.phrases ? q.phrases.map(cleanString) : q.en.split(' ').map(cleanString);
-                if(arrangedBlocks.map(cleanString).join('') === correctArr.join('')) isCorrect = true;
-            } else if (currentMode === 4) {
-                const correctArr = q.en.split(' ').map(cleanString);
+            } else if (currentMode === 3 || currentMode === 4) {
+                const correctArr = (currentMode === 3 && q.phrases ? q.phrases : q.en.split(' ')).map(cleanString);
                 if(arrangedBlocks.map(cleanString).join('') === correctArr.join('')) isCorrect = true;
             }
 
             if (isCorrect) {
-                showMessage(true, "정답입니다! 👏");
-                addCoins(10); // 정답 맞힐 때 10코인 추가
+                playSound('correct');
+                
+                // 미니 파티클 폭죽 효과
+                const rect = document.getElementById('btn-check').getBoundingClientRect();
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: rect.top/window.innerHeight },
+                    colors: ['#34d399', '#fcd34d', '#818cf8']
+                });
+
+                showMessage(true, "정답입니다! 완벽해요! ✨");
+                addCoins(10); 
                 document.getElementById('btn-check').classList.add('hidden');
                 document.getElementById('btn-next').classList.remove('hidden');
-                document.getElementById('btn-next').innerText = "다음으로 ➡";
+                document.getElementById('btn-next').innerHTML = "다음으로 <i class='fas fa-arrow-right ml-1'></i>";
                 document.getElementById('btn-hint').classList.add('hidden');
-                document.getElementById('hint-area').innerHTML = ''; // 정답 시 힌트 삭제
+                document.getElementById('hint-area').innerHTML = ''; 
             } else {
-                showMessage(false, "다시 한번 확인해 보세요! 🤔");
+                playSound('wrong');
+                // 오답 시 흔들기 효과
+                const qBox = document.getElementById('question-container');
+                qBox.classList.remove('shake');
+                void qBox.offsetWidth; // reflow
+                qBox.classList.add('shake');
+
+                showMessage(false, "앗, 다시 한번 확인해 볼까요? 🤔");
                 failedAttempt = true;
                 document.getElementById('btn-hint').classList.remove('hidden');
             }
@@ -719,10 +897,10 @@
         function showHint() {
             const q = currentQuestions[currentQuestionIndex];
             const area = document.getElementById('hint-area');
-            area.innerHTML = ''; // 초기화
+            area.innerHTML = '';
 
             const hintBox = document.createElement('div');
-            hintBox.className = 'bg-rose-50 border-4 border-rose-200 p-4 rounded-xl font-bold select-none text-left';
+            hintBox.className = 'bg-rose-50 border-4 border-rose-200 p-5 rounded-2xl font-bold select-none text-left pop-in shadow-inner';
             
             const correctWords = (currentMode === 3 && q.phrases ? q.phrases : q.en.split(' ')).map(w => w.trim());
             let inputWords = [];
@@ -735,12 +913,12 @@
                 inputWords = arrangedBlocks;
             }
 
-            let hintHTML = '<div class="text-sm text-rose-700 mb-2"><i class="fas fa-search"></i> 내가 쓴 답에서 틀린 부분 확인:</div>';
+            let hintHTML = '<div class="text-base text-rose-700 mb-3 font-game"><i class="fas fa-search"></i> 내가 쓴 답에서 틀린 부분 확인:</div>';
             
             if (inputWords.length === 0) {
                 hintHTML += '<div class="text-slate-500 italic mb-4">입력한 내용이 없습니다. 먼저 답을 입력해보세요!</div>';
             } else {
-                hintHTML += '<div class="leading-loose text-lg mb-4">';
+                hintHTML += '<div class="leading-loose text-xl mb-4">';
                 let buffer = [];
                 let currentIsCorrect = null;
 
@@ -755,25 +933,20 @@
                     }
                 }
 
-                // 학생이 입력한 단어(inputWords)를 기준으로 렌더링 (정답 노출 방지)
                 inputWords.forEach((iw, idx) => {
                     const isCorrect = (idx < correctWords.length && cleanString(iw) === cleanString(correctWords[idx]));
-                    
                     if (currentIsCorrect !== isCorrect) {
                         hintHTML += flushBuffer();
                         currentIsCorrect = isCorrect;
                     }
-                    buffer.push(iw); // 학생이 쓴 단어를 화면에 표시
+                    buffer.push(iw); 
                 });
-                
                 hintHTML += flushBuffer();
                 hintHTML += '</div>';
             }
 
-            // 영작 모드(5)인 경우, 정답을 다 알려주지 않고 '첫 글자 마스킹 힌트'를 제공
             if (currentMode === 5) {
-                hintHTML += '<div class="text-sm text-indigo-700 mb-2 mt-4 border-t-2 border-rose-200 pt-4"><i class="fas fa-lightbulb"></i> 영작 힌트 (첫 글자와 기호만 보여요!):</div>';
-                
+                hintHTML += '<div class="text-base text-indigo-700 mb-3 mt-5 border-t-2 border-rose-200 pt-4 font-game"><i class="fas fa-lightbulb text-amber-500"></i> 영작 특별 힌트 (첫 글자와 기호):</div>';
                 const maskedSentence = q.en.split(' ').map(word => {
                     let result = '';
                     let firstCharFound = false;
@@ -787,13 +960,12 @@
                                 result += '_';
                             }
                         } else {
-                            result += char; // 기호는 그대로 유지
+                            result += char;
                         }
                     }
                     return result;
                 }).join(' ');
-                
-                hintHTML += `<div class="text-lg font-mono tracking-widest bg-white p-3 rounded-xl border-2 border-indigo-200 text-indigo-800 break-words">${maskedSentence}</div>`;
+                hintHTML += `<div class="text-xl font-mono tracking-widest bg-white p-4 rounded-xl border-4 border-indigo-200 text-indigo-800 break-words shadow-inner">${maskedSentence}</div>`;
             }
 
             hintBox.innerHTML = hintHTML;
@@ -803,8 +975,8 @@
 
         function showMessage(isSuccess, text) {
             const msg = document.getElementById('feedback-message');
-            msg.className = `font-black text-xl p-4 rounded-xl game-box mt-4 ${isSuccess ? 'bg-emerald-100 text-emerald-700 border-emerald-400' : 'bg-rose-100 text-rose-700 border-rose-400'} block`;
-            msg.innerHTML = isSuccess ? `🎉 ${text}` : `❌ ${text}`;
+            msg.className = `font-game text-2xl p-4 rounded-2xl border-4 mt-5 pop-in ${isSuccess ? 'bg-emerald-100 text-emerald-800 border-emerald-400' : 'bg-rose-100 text-rose-800 border-rose-400'} block`;
+            msg.innerHTML = text;
         }
 
         function nextQuestion() {
@@ -816,28 +988,31 @@
             }
         }
 
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
         function addCoins(amount) {
             coins += amount;
             updateCoinDisplay();
             saveGameData();
+            playSound('coin');
             
-            // 코인 팝업 애니메이션 효과
             const popup = document.createElement('div');
             popup.className = 'coin-popup';
-            popup.innerHTML = `+${amount} <i class="fas fa-coins text-amber-400"></i>`;
+            popup.innerHTML = `+${amount} <i class="fas fa-coins"></i>`;
             document.body.appendChild(popup);
             setTimeout(() => popup.remove(), 1200);
         }
 
         function finishMode() {
+            playSound('tada');
+            
+            // 화면 전체 폭죽 축하 효과
+            const duration = 3000;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#fbbf24', '#60a5fa', '#34d399'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#fbbf24', '#60a5fa', '#34d399'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+
             const area = document.getElementById('interactive-area');
             const msg = document.getElementById('feedback-message');
             document.getElementById('btn-check').classList.add('hidden');
@@ -849,29 +1024,23 @@
             document.getElementById('progress-track').setAttribute('aria-valuenow', '100');
             document.getElementById('progress-text').innerText = `${currentQuestions.length} / ${currentQuestions.length}`;
             
-            area.innerHTML = `<div class="text-center py-8 flex flex-col items-center">
-                <div class="text-7xl mb-4 animate-bounce">🏆</div>
-                <div class="text-2xl font-black text-indigo-700">모든 문장 학습 완료!</div>
-                <div class="text-amber-500 font-black text-2xl mt-4 bg-amber-50 px-6 py-3 rounded-full border-4 border-amber-200 shadow-sm">+50 코인 보너스!</div>
+            area.innerHTML = `<div class="text-center py-10 flex flex-col items-center pop-in">
+                <div class="text-8xl mb-6 animate-bounce">🏆</div>
+                <div class="text-4xl font-game text-indigo-700 drop-shadow-md">단원 학습 클리어!</div>
+                <div class="text-amber-600 font-game text-2xl mt-6 bg-amber-100 px-8 py-4 rounded-full border-4 border-amber-300 shadow-sm pop-in" style="animation-delay: 0.5s;">+50 코인 보너스!</div>
             </div>`;
-            area.classList.remove('hidden'); // 결과 화면 강제 표시 (1번 모드용)
+            area.classList.remove('hidden'); 
             msg.className = 'hidden';
             
             addCoins(50); 
             sendToGoogleSheets("모드 완료");
             
-            setTimeout(() => { showPage('page-mode'); }, 3500);
+            setTimeout(() => { showPage('page-mode'); }, 4000);
         }
 
         function sendToGoogleSheets(action) {
             if(!GAS_URL || GAS_URL.includes("여기에_선생님의")) return;
-            const data = {
-                studentId: studentData.id,
-                studentName: studentData.name, // 구글 시트 호환을 위해 키는 name 그대로 사용
-                unit: currentUnit,
-                mode: currentMode,
-                action: action
-            };
+            const data = { studentId: studentData.id, studentName: studentData.name, unit: currentUnit, mode: currentMode, action: action };
             fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -879,62 +1048,59 @@
             }).catch(e => console.log("Google Sheets Error:", e));
         }
 
-        // 4개의 탭에 맞춰 다양하고 저렴한 상점 아이템 대량 추가
+        // 상점 데이터 (얼굴 가리지 않는 아이템으로 교체)
         const shopColors = [
-            { id: 'c1', name: '기본 초록', color: '#a7f3d0', price: 0 },
-            { id: 'c2', name: '딸기 핑크', color: '#fbcfe8', price: 10 },
-            { id: 'c3', name: '소다 블루', color: '#bae6fd', price: 10 },
-            { id: 'c4', name: '포도 퍼플', color: '#d8b4fe', price: 20 },
+            { id: 'c1', name: '기본 멜론', color: '#a7f3d0', price: 0 },
+            { id: 'c2', name: '딸기 우유', color: '#fbcfe8', price: 10 },
+            { id: 'c3', name: '소다 팝', color: '#bae6fd', price: 10 },
+            { id: 'c4', name: '포도 젤리', color: '#d8b4fe', price: 20 },
             { id: 'c5', name: '민트 쵸코', color: '#5eead4', price: 30 },
-            { id: 'c6', name: '레몬 옐로', color: '#fef08a', price: 50 },
-            { id: 'c7', name: '다크 블랙', color: '#334155', price: 100 },
+            { id: 'c6', name: '레몬 캔디', color: '#fef08a', price: 50 },
+            { id: 'c7', name: '블랙 오닉스', color: '#334155', price: 100 },
             { id: 'c8', name: '골드 슬라임', color: '#fbbf24', price: 300 },
         ];
 
         const shopHats = [
             { id: 'h0', name: '벗기', icon: '', price: 0 },
-            { id: 'h1', name: '새싹 🌱', icon: '🌱', price: 10 },
-            { id: 'h2', name: '리본 🎀', icon: '🎀', price: 20 },
-            { id: 'h3', name: '야구모자 🧢', icon: '🧢', price: 30 },
-            { id: 'h4', name: '파티모자 🥳', icon: '🥳', price: 40 },
-            { id: 'h5', name: '버섯 🍄', icon: '🍄', price: 50 },
-            { id: 'h6', name: '천사링 👼', icon: '👼', price: 100 },
-            { id: 'h7', name: '마법사 🧙‍♂️', icon: '🧙‍♂️', price: 150 },
-            { id: 'h8', name: '왕관 👑', icon: '👑', price: 300 },
+            { id: 'h1', name: '새싹', icon: '🌱', price: 10 },
+            { id: 'h2', name: '리본', icon: '🎀', price: 20 },
+            { id: 'h3', name: '야구모자', icon: '🧢', price: 30 },
+            { id: 'h4', name: '헤드폰', icon: '🎧', price: 50 },
+            { id: 'h5', name: '학사모', icon: '🎓', price: 100 },
+            { id: 'h6', name: '벚꽃', icon: '🌸', price: 150 },
+            { id: 'h7', name: '잎사귀', icon: '🌿', price: 200 },
+            { id: 'h8', name: '황금 왕관', icon: '👑', price: 300 },
         ];
 
-        // 얼굴 장식으로 변경 (안경, 가면 등)
         const shopFaces = [
-            { id: 'f0', name: '기본 눈', icon: '', price: 0 },
-            { id: 'f1', name: '안경 👓', icon: '👓', price: 10 },
-            { id: 'f2', name: '선글라스 🕶️', icon: '🕶️', price: 20 },
-            { id: 'f3', name: '수영 고글 🥽', icon: '🥽', price: 30 },
-            { id: 'f4', name: '반창고 🩹', icon: '🩹', price: 40 },
-            { id: 'f5', name: '입술 자국 💋', icon: '💋', price: 50 },
-            { id: 'f6', name: '가면 🎭', icon: '🎭', price: 100 },
-            { id: 'f7', name: '스노클 🤿', icon: '🤿', price: 100 },
+            { id: 'f0', name: '기본 얼굴', icon: '', price: 0 },
+            { id: 'f1', name: '홍조', icon: '😳', price: 10 },
+            { id: 'f2', name: '메롱', icon: '😛', price: 20 },
+            { id: 'f3', name: '반창고', icon: '🩹', price: 30 },
+            { id: 'f4', name: '뿔테안경', icon: '👓', price: 40 },
+            { id: 'f5', name: '선글라스', icon: '🕶️', price: 50 },
+            { id: 'f6', name: '눈물 찔끔', icon: '💧', price: 100 },
+            { id: 'f7', name: '수영 고글', icon: '🥽', price: 150 },
         ];
 
         const shopAccs = [
-            { id: 'a0', name: '치우기', icon: '', price: 0 },
-            { id: 'a1', name: '반짝 ✨', icon: '✨', price: 10 },
-            { id: 'a2', name: '음표 🎵', icon: '🎵', price: 20 },
-            { id: 'a3', name: '물방울 💧', icon: '💧', price: 30 },
-            { id: 'a4', name: '불꽃 🔥', icon: '🔥', price: 50 },
-            { id: 'a5', name: '방패 🛡️', icon: '🛡️', price: 100 },
-            { id: 'a6', name: '거북이 🐢', icon: '🐢', price: 200 },
-            { id: 'a7', name: '요정 🧚', icon: '🧚', price: 300 },
+            { id: 'a1', name: '반짝이', icon: '✨', price: 10 },
+            { id: 'a2', name: '음표', icon: '🎵', price: 20 },
+            { id: 'a3', name: '하트', icon: '💖', price: 30 },
+            { id: 'a4', name: '번개', icon: '⚡', price: 50 },
+            { id: 'a5', name: '불꽃', icon: '🔥', price: 100 },
+            { id: 'a6', name: '검', icon: '⚔️', price: 150 },
+            { id: 'a7', name: '방패', icon: '🛡️', price: 200 },
+            { id: 'a8', name: '나비', icon: '🦋', price: 300 },
         ];
 
         function changeShopTab(tab) {
             currentShopTab = tab;
-            selectedShopItem = null; // 탭 변경 시 선택 초기화
-            // 탭 스타일 리셋
+            selectedShopItem = null;
             document.querySelectorAll('.shop-tab-btn').forEach(btn => {
-                btn.className = 'shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300';
+                btn.className = 'shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-5 py-3 rounded-xl font-game text-xl whitespace-nowrap border-b-4 border-slate-300 transition';
             });
-            // 활성 탭 스타일
-            document.getElementById('tab-' + tab).className = 'shop-tab-btn active-tab bg-indigo-500 text-white px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-indigo-700';
+            document.getElementById('tab-' + tab).className = 'shop-tab-btn active-tab bg-indigo-500 text-white px-5 py-3 rounded-xl font-game text-xl whitespace-nowrap border-b-4 border-indigo-700 transition';
             renderShop();
             updateBuyButton();
         }
@@ -949,127 +1115,171 @@
             if (currentShopTab === 'colors') { list = shopColors; activeKey = 'color'; }
             else if (currentShopTab === 'hats') { list = shopHats; activeKey = 'hat'; }
             else if (currentShopTab === 'faces') { list = shopFaces; activeKey = 'face'; }
-            else if (currentShopTab === 'accs') { list = shopAccs; activeKey = 'acc'; }
+            else if (currentShopTab === 'accs') { list = shopAccs; activeKey = 'accs'; }
 
             list.forEach(item => {
                 const itemValue = item.color || item.icon;
-                const isEquipped = myAvatar[activeKey] === itemValue;
-                const isPreviewing = previewAvatar && previewAvatar[activeKey] === itemValue;
+                let isEquipped = false;
+                let isPreviewing = false;
+
+                if (activeKey === 'accs') {
+                    // 다중 장착 (배열 내 존재 여부 파악)
+                    isEquipped = myAvatar.accs.some(a => a.icon === itemValue);
+                    // 현재 편집중인(선택된) 파츠인지 확인
+                    isPreviewing = selectedShopItem && selectedShopItem.type === 'accs' && selectedShopItem.item.icon === itemValue;
+                } else {
+                    isEquipped = myAvatar[activeKey] === itemValue;
+                    isPreviewing = selectedShopItem && selectedShopItem.type === activeKey && selectedShopItem.item.icon === itemValue;
+                }
+
                 const isOwned = item.price === 0 || purchasedItems.includes(item.id);
                 
                 const btn = document.createElement('button');
-                // 미리보기 중인 아이템 강조
-                btn.className = `game-btn rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm transition-colors ${isPreviewing ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-slate-50 text-slate-700'}`;
+                btn.className = `game-btn rounded-2xl p-4 flex flex-col items-center justify-center font-bold text-sm transition-colors ${isPreviewing ? 'bg-indigo-100 border-indigo-600 text-indigo-900' : 'bg-white hover:bg-slate-50 text-slate-700'}`;
                 
                 let iconHTML = item.color 
-                    ? `<div class="w-10 h-10 rounded-full mb-2 border-4 ${isPreviewing ? 'border-white' : 'border-slate-800'}" style="background-color: ${item.color}"></div>`
-                    : `<div class="text-4xl mb-2">${item.icon || '❌'}</div>`;
+                    ? `<div class="w-12 h-12 rounded-full mb-3 border-4 ${isPreviewing ? 'border-white' : 'border-slate-800'}" style="background-color: ${item.color}"></div>`
+                    : `<div class="text-4xl mb-3 drop-shadow-md">${item.icon || '❌'}</div>`;
                 
                 let priceHTML = '';
-                if (isEquipped) {
-                    priceHTML = `<div class="text-emerald-600 font-black mt-1">착용중 ✔️</div>`;
-                } else if (isOwned) {
-                    priceHTML = `<div class="text-indigo-500 font-black mt-1">보유중</div>`;
+                if (activeKey === 'accs') {
+                    // 장식 탭은 샀으면 계속 무제한으로 달 수 있음
+                    priceHTML = isOwned ? `<div class="text-indigo-500 font-game text-base mt-1">보유중 (터치하여 추가)</div>` 
+                                        : `<div class="text-amber-500 font-game text-base mt-1">${item.price} 코인</div>`;
                 } else {
-                    priceHTML = `<div class="text-amber-500 font-black mt-1">${item.price} 코인</div>`;
+                    if (isEquipped) {
+                        priceHTML = `<div class="text-emerald-600 font-game text-base mt-1">착용중 ✔️</div>`;
+                    } else if (isOwned) {
+                        priceHTML = `<div class="text-indigo-500 font-game text-base mt-1">보유중</div>`;
+                    } else {
+                        priceHTML = `<div class="text-amber-500 font-game text-base mt-1">${item.price} 코인</div>`;
+                    }
                 }
 
-                btn.innerHTML = `${iconHTML}
-                                 <div class="truncate text-base mb-1 w-full text-center">${item.name}</div>
-                                 ${priceHTML}`;
-                                 
+                btn.innerHTML = `${iconHTML}<div class="truncate text-lg mb-1 w-full text-center font-game">${item.name}</div>${priceHTML}`;
                 btn.onclick = () => selectShopItem(item, activeKey, itemValue);
                 container.appendChild(btn);
             });
         }
 
-        // 아이템 선택 시 미리보기에만 적용 (실제 구매/장착은 버튼 클릭 시)
         function selectShopItem(item, key, value) {
-            previewAvatar[key] = value;
-            selectedShopItem = { item, key, value };
+            if (key === 'accs') {
+                // 다중 장착 탭: 무조건 새 아이템으로 배열에 추가하고 그것을 조작 대상으로 삼음
+                const newAcc = { icon: value, x: -30 + Math.random()*60, y: -30 + Math.random()*60, s: 1.5 };
+                previewAvatar.accs.push(newAcc);
+                selectedShopItem = { type: 'accs', index: previewAvatar.accs.length - 1, item: item };
+            } else {
+                previewAvatar[key] = value;
+                selectedShopItem = { type: key, item: item };
+            }
             applyPreviewAvatar();
-            renderShop(); // UI 리렌더링하여 선택 테두리 갱신
+            renderShop();
             updateBuyButton();
         }
 
-        // 장식품 위치/크기 조절 함수
+        // 장식품 위치/크기 조절 (다중 장착 지원)
         function moveItem(axis, amount) {
-            if (!selectedShopItem || selectedShopItem.key === 'color') return;
-            const key = selectedShopItem.key; // 'hat', 'face', 'acc'
+            if (!selectedShopItem || selectedShopItem.type === 'color') return;
             
-            if (axis === 'x') previewAvatar.offsets[key].x += amount;
-            if (axis === 'y') previewAvatar.offsets[key].y += amount;
-            if (axis === 's') {
-                previewAvatar.offsets[key].s = Math.max(0.5, previewAvatar.offsets[key].s + amount);
+            const key = selectedShopItem.type;
+            let targetOffset;
+
+            if (key === 'accs') {
+                targetOffset = previewAvatar.accs[selectedShopItem.index];
+            } else {
+                targetOffset = previewAvatar.offsets[key];
             }
             
+            if (axis === 'x') targetOffset.x += amount;
+            if (axis === 'y') targetOffset.y += amount;
+            if (axis === 's') targetOffset.s = Math.max(0.5, targetOffset.s + amount);
+            
             applyPreviewAvatar();
-            updateBuyButton(); // 변경사항이 생겼으므로 저장 버튼 갱신
+            updateBuyButton(); 
         }
 
-        // 구매/장착 버튼 상태 업데이트
+        // 장식 빼기 기능
+        function removeSelectedAcc() {
+            if (selectedShopItem && selectedShopItem.type === 'accs') {
+                previewAvatar.accs.splice(selectedShopItem.index, 1);
+                selectedShopItem = null;
+                applyPreviewAvatar();
+                renderShop();
+                updateBuyButton();
+                playSound('click');
+            }
+        }
+
         function updateBuyButton() {
             const btn = document.getElementById('btn-buy-equip');
             const posCtrl = document.getElementById('position-controls');
+            const removeBtn = document.getElementById('btn-remove-acc');
 
-            let activeKey = '';
-            if (currentShopTab === 'colors') activeKey = 'color';
-            else if (currentShopTab === 'hats') activeKey = 'hat';
-            else if (currentShopTab === 'faces') activeKey = 'face';
-            else if (currentShopTab === 'accs') activeKey = 'acc';
-
-            // 컬러탭이 아니고, 해당 카테고리에 아이템이 선택/장착되어 있으면 컨트롤 표시
-            if (activeKey !== 'color' && previewAvatar[activeKey] !== '') {
-                posCtrl.classList.remove('hidden');
+            let hasActiveItem = false;
+            
+            if (currentShopTab === 'accs') {
+                if (selectedShopItem && selectedShopItem.type === 'accs') {
+                    hasActiveItem = true;
+                    removeBtn.classList.remove('hidden');
+                } else {
+                    removeBtn.classList.add('hidden');
+                }
             } else {
-                posCtrl.classList.add('hidden');
+                removeBtn.classList.add('hidden');
+                let activeKey = currentShopTab === 'colors' ? 'color' : (currentShopTab === 'hats' ? 'hat' : 'face');
+                if (activeKey !== 'color' && previewAvatar[activeKey] !== '') {
+                    hasActiveItem = true;
+                }
             }
 
-            // 기존 상태와 미리보기 상태 비교 (변경사항 여부 체크)
+            if (hasActiveItem) posCtrl.classList.remove('hidden');
+            else posCtrl.classList.add('hidden');
+
             const isChanged = JSON.stringify(previewAvatar) !== JSON.stringify(myAvatar);
 
             if (!selectedShopItem) {
                 if(isChanged) {
                     btn.innerText = "💾 변경사항 저장하기";
-                    btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl mt-4";
+                    btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-game text-xl py-4 rounded-xl mt-4 pop-in";
                     btn.onclick = savePreviewToAvatar;
                 } else {
                     btn.innerText = "아이템을 선택하세요";
-                    btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-black py-4 rounded-xl mt-4 cursor-not-allowed";
+                    btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-game text-xl py-4 rounded-xl mt-4 cursor-not-allowed";
                     btn.onclick = null;
                 }
                 return;
             }
 
-            const { item, key, value } = selectedShopItem;
+            const item = selectedShopItem.item;
             const isOwned = item.price === 0 || purchasedItems.includes(item.id);
 
             if (!isOwned) {
                 btn.innerHTML = `🛒 구매 및 장착 (<i class="fas fa-coins text-amber-300"></i> ${item.price})`;
                 if (coins >= item.price) {
-                    btn.className = "game-btn w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black py-4 rounded-xl mt-4";
+                    btn.className = "game-btn w-full bg-indigo-500 hover:bg-indigo-600 text-white font-game text-xl py-4 rounded-xl mt-4 pop-in";
                     btn.onclick = () => {
                         coins -= item.price;
                         purchasedItems.push(item.id);
+                        playSound('coin');
                         savePreviewToAvatar();
                     };
                 } else {
-                    btn.className = "game-btn w-full bg-rose-400 text-white font-black py-4 rounded-xl mt-4 opacity-70 cursor-not-allowed";
-                    btn.onclick = () => alert("코인이 부족합니다! 문제를 더 풀어서 코인을 모아보세요.");
+                    btn.className = "game-btn w-full bg-rose-400 text-white font-game text-xl py-4 rounded-xl mt-4 opacity-70 cursor-not-allowed";
+                    btn.onclick = () => showToast("코인이 부족합니다! 문제를 풀고 코인을 모아보세요.", true);
                 }
             } else if (isChanged) {
                 btn.innerText = "💾 장착 및 위치 저장";
-                btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl mt-4";
+                btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-game text-xl py-4 rounded-xl mt-4 pop-in";
                 btn.onclick = savePreviewToAvatar;
             } else {
                 btn.innerText = "✔️ 현재 착용 중";
-                btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-black py-4 rounded-xl mt-4 cursor-not-allowed";
+                btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-game text-xl py-4 rounded-xl mt-4 cursor-not-allowed";
                 btn.onclick = null;
             }
         }
 
-        // 미리보기 내용을 실제 내 아바타로 확정 저장
         function savePreviewToAvatar() {
+            playSound('tada');
             myAvatar = JSON.parse(JSON.stringify(previewAvatar));
             saveGameData();
             updateCoinDisplay();
@@ -1078,17 +1288,25 @@
             
             const btn = document.getElementById('btn-buy-equip');
             btn.innerText = "저장 완료! ✨";
-            btn.className = "game-btn w-full bg-emerald-400 text-emerald-900 font-black py-4 rounded-xl mt-4";
+            btn.className = "game-btn w-full bg-emerald-400 text-emerald-900 font-game text-xl py-4 rounded-xl mt-4";
+            selectedShopItem = null; // 저장 후 선택 해제
             setTimeout(() => { updateBuyButton(); }, 1500);
         }
 
-        // 아바타 렌더링을 위한 공통 HTML 생성 함수 (위치/크기 적용)
         function getAvatarHTML(avatarObj) {
             const off = avatarObj.offsets;
-            const hatHTML = avatarObj.hat ? `<div style="position:absolute; top:${off.hat.y}%; left:${off.hat.x}%; transform: scale(${off.hat.s}); z-index:20; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); pointer-events:none;">${avatarObj.hat}</div>` : '';
-            const faceHTML = avatarObj.face ? `<div style="position:absolute; top:${off.face.y}%; left:${off.face.x}%; transform: scale(${off.face.s}); z-index:15; pointer-events:none;">${avatarObj.face}</div>` : '';
-            const accHTML = avatarObj.acc ? `<div style="position:absolute; top:${off.acc.y}%; left:${off.acc.x}%; transform: scale(${off.acc.s}); z-index:10; pointer-events:none;">${avatarObj.acc}</div>` : '';
-            return hatHTML + faceHTML + accHTML;
+            let html = '';
+            // 여러개 장식 렌더링
+            if(avatarObj.accs && avatarObj.accs.length > 0) {
+                avatarObj.accs.forEach(a => {
+                    html += `<div style="position:absolute; top:${a.y}%; left:${a.x}%; transform: scale(${a.s}); z-index:10; pointer-events:none; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));">${a.icon}</div>`;
+                });
+            }
+            // 일반 모자, 얼굴
+            if(avatarObj.face) html += `<div style="position:absolute; top:${off.face.y}%; left:${off.face.x}%; transform: scale(${off.face.s}); z-index:15; pointer-events:none; filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.2));">${avatarObj.face}</div>`;
+            if(avatarObj.hat) html += `<div style="position:absolute; top:${off.hat.y}%; left:${off.hat.x}%; transform: scale(${off.hat.s}); z-index:20; pointer-events:none; filter: drop-shadow(0px 3px 0px rgba(0,0,0,0.3));">${avatarObj.hat}</div>`;
+            
+            return html;
         }
 
         function applyPreviewAvatar() {
@@ -1103,7 +1321,6 @@
             slimes.forEach(s => {
                 s.style.backgroundColor = myAvatar.color || '#a7f3d0';
             });
-            
             const combinedHTML = getAvatarHTML(myAvatar);
             document.getElementById('mini-item').innerHTML = combinedHTML;
         }
