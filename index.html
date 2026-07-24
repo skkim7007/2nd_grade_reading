@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 본문 마스터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .block-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .block-item:active {
+            transform: scale(0.95);
+        }
+        .word-pool {
+            min-height: 80px;
+        }
+        .answer-area {
+            min-height: 80px;
+            border: 2px dashed #cbd5e1;
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col">
+
+    <nav class="bg-indigo-600 text-white shadow-md p-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-book-open mr-2"></i>영어 본문 마스터</h1>
+            <div id="user-info-display" class="hidden text-sm font-medium bg-indigo-700 px-3 py-1 rounded-full"></div>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <!-- 1. 로그인 페이지 -->
+        <div id="page-login" class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full w-full">
+            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">학습 시작하기</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">학번</label>
+                    <input type="text" id="input-student-id" placeholder="예: 10101" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">이름</label>
+                    <input type="text" id="input-student-name" placeholder="예: 홍길동" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+                <button onclick="login()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-indigo-200 mt-4">
+                    입장하기 <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. 단원 선택 페이지 -->
+        <div id="page-unit" class="hidden w-full max-w-4xl">
+            <h2 class="text-3xl font-bold mb-8 text-center text-slate-800">학습할 단원을 선택하세요</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="selectUnit(5)" class="bg-white hover:bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 shadow-sm transition text-left group">
+                    <span class="text-indigo-600 font-bold text-lg mb-2 block">Lesson 5</span>
+                    <span class="text-slate-700 font-semibold text-xl group-hover:text-indigo-700">나의 고향, 춘천</span>
+                </button>
+                <button onclick="selectUnit(6)" class="bg-white hover:bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 shadow-sm transition text-left group">
+                    <span class="text-indigo-600 font-bold text-lg mb-2 block">Lesson 6</span>
+                    <span class="text-slate-700 font-semibold text-xl group-hover:text-indigo-700">나의 첫 스케이트보드 타기 수업</span>
+                </button>
+                <button onclick="selectUnit(7)" class="bg-white hover:bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 shadow-sm transition text-left group">
+                    <span class="text-indigo-600 font-bold text-lg mb-2 block">Lesson 7</span>
+                    <span class="text-slate-700 font-semibold text-xl group-hover:text-indigo-700">추운 곳에 사는 동물들</span>
+                </button>
+                <button onclick="selectUnit(8)" class="bg-white hover:bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 shadow-sm transition text-left group">
+                    <span class="text-indigo-600 font-bold text-lg mb-2 block">Lesson 8</span>
+                    <span class="text-slate-700 font-semibold text-xl group-hover:text-indigo-700">가격 비교하기</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. 모드 선택 페이지 -->
+        <div id="page-mode" class="hidden w-full max-w-4xl">
+            <div class="flex items-center mb-8">
+                <button onclick="showPage('page-unit')" class="text-slate-500 hover:text-indigo-600 transition p-2 rounded-full hover:bg-slate-100"><i class="fas fa-arrow-left text-xl"></i></button>
+                <h2 class="text-3xl font-bold text-center text-slate-800 flex-grow mr-10" id="mode-title-unit">학습 방식 선택</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="startLearning(1)" class="bg-white hover:border-indigo-400 border-2 border-transparent rounded-2xl p-6 shadow-md transition text-left">
+                    <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"><i class="fas fa-align-left"></i></div>
+                    <h3 class="text-xl font-bold mb-2">1. 한 줄 해석 학습</h3>
+                    <p class="text-slate-500 text-sm">영어 문장과 한국어 해석을 한 줄씩 비교하며 읽어봅니다.</p>
+                </button>
+                <button onclick="startLearning(2)" class="bg-white hover:border-indigo-400 border-2 border-transparent rounded-2xl p-6 shadow-md transition text-left">
+                    <div class="bg-emerald-100 text-emerald-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"><i class="fas fa-keyboard"></i></div>
+                    <h3 class="text-xl font-bold mb-2">2. 영어 문장 따라 치기</h3>
+                    <p class="text-slate-500 text-sm">주어진 영어 문장을 그대로 타이핑하며 스펠링을 익힙니다.</p>
+                </button>
+                <button onclick="startLearning(3)" class="bg-white hover:border-indigo-400 border-2 border-transparent rounded-2xl p-6 shadow-md transition text-left">
+                    <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"><i class="fas fa-layer-group"></i></div>
+                    <h3 class="text-xl font-bold mb-2">3. 의미 단위(구) 배열</h3>
+                    <p class="text-slate-500 text-sm">한국어 뜻을 보고 덩어리(구) 단위로 쪼개진 블록을 배열합니다.</p>
+                </button>
+                <button onclick="startLearning(4)" class="bg-white hover:border-indigo-400 border-2 border-transparent rounded-2xl p-6 shadow-md transition text-left">
+                    <div class="bg-orange-100 text-orange-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"><i class="fas fa-puzzle-piece"></i></div>
+                    <h3 class="text-xl font-bold mb-2">4. 단어 배열</h3>
+                    <p class="text-slate-500 text-sm">한국어 뜻을 보고 낱개 단어로 쪼개진 블록을 순서대로 배열합니다.</p>
+                </button>
+                <button onclick="startLearning(5)" class="bg-white hover:border-indigo-400 border-2 border-transparent rounded-2xl p-6 shadow-md transition text-left md:col-span-2">
+                    <div class="bg-rose-100 text-rose-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"><i class="fas fa-pen-nib"></i></div>
+                    <h3 class="text-xl font-bold mb-2">5. 영작하기 (최종 단계)</h3>
+                    <p class="text-slate-500 text-sm">한국어 뜻만 보고 영어 문장을 스스로 처음부터 끝까지 적어봅니다.</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. 실제 학습 페이지 -->
+        <div id="page-learn" class="hidden w-full max-w-3xl">
+            <!-- 진행도 바 -->
+            <div class="mb-6 flex items-center gap-4">
+                <button onclick="showPage('page-mode')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+                <div class="w-full bg-slate-200 rounded-full h-3">
+                    <div id="progress-bar" class="bg-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+                <span id="learning-progress" class="text-sm font-bold text-slate-500 whitespace-nowrap">1 / 10</span>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <!-- 질문 영역 -->
+                <div class="mb-8">
+                    <div class="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full mb-3" id="badge-mode">모드</div>
+                    <h3 class="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed break-keep" id="question-ko">한국어 문장</h3>
+                </div>
+
+                <!-- 인터랙션 영역 (모드에 따라 동적으로 변경됨) -->
+                <div id="interaction-area" class="min-h-[120px]">
+                    <!-- JS에서 렌더링 -->
+                </div>
+
+                <!-- 정답 확인 피드백 -->
+                <div id="feedback-area" class="mt-4 hidden p-4 rounded-xl font-medium text-center"></div>
+
+                <!-- 컨트롤 버튼 -->
+                <div class="mt-8 flex justify-end gap-3">
+                    <button id="btn-hint" onclick="showHint()" class="hidden bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-xl transition shadow-sm">
+                        힌트 보기 <i class="fas fa-lightbulb ml-1"></i>
+                    </button>
+                    <button id="btn-check" onclick="checkAnswer()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-6 rounded-xl transition">
+                        정답 확인 <i class="fas fa-check ml-1"></i>
+                    </button>
+                    <button id="btn-next" onclick="nextQuestion()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-200">
+                        다음 문장 <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // === [데이터베이스 - 5,6,7,8과 전체 문장] ===
+        const db = {
+            5: [
+                { en: "Welcome to my blog, “Happy Yujin!”", ko: "제 블로그인 ‘행복한 유진!’에 오신 것을 환영합니다.", phrases: ["Welcome to", "my blog,", "“Happy Yujin!”"] },
+                { en: "Hi, my name is Yujin,", ko: "안녕하세요, 제 이름은 유진이고,", phrases: ["Hi,", "my name is", "Yujin,"] },
+                { en: "and I’m writing a blog to introduce my hometown, Chuncheon.", ko: "저는 제 고향인 춘천을 소개하기 위해서 블로그를 쓰고 있어요.", phrases: ["and I’m writing", "a blog", "to introduce", "my hometown, Chuncheon."] },
+                { en: "Have you ever visited Chuncheon?", ko: "당신은 춘천을 방문해 본 적이 있나요?", phrases: ["Have you ever", "visited", "Chuncheon?"] },
+                { en: "It’s famous for its beautiful mountains and lakes.", ko: "춘천은 아름다운 산과 호수로 유명해요.", phrases: ["It’s famous for", "its beautiful", "mountains and lakes."] },
+                { en: "There are so many things to do and so many things to see.", ko: "할 것이 정말 많고, 볼 것도 정말 많답니다.", phrases: ["There are", "so many things to do", "and so many things to see."] },
+                { en: "Nowadays, the number of foreign tourists who visit Chuncheon is growing.", ko: "요즘에는 춘천을 방문하는 외국인 관광객들의 수가 늘고 있어요.", phrases: ["Nowadays,", "the number of", "foreign tourists", "who visit Chuncheon", "is growing."] },
+                { en: "I want to share the history of Chuncheon and tips for visitors from around the world.", ko: "저는 춘천의 역사와 전 세계 방문객들을 위한 조언을 공유하고 싶어요.", phrases: ["I want to share", "the history of Chuncheon", "and tips for visitors", "from around the world."] },
+                { en: "So, I started this blog.", ko: "그래서 저는 이 블로그를 시작했답니다.", phrases: ["So,", "I started", "this blog."] },
+                { en: "Best Places to Visit in Chuncheon", ko: "춘천에서 방문할 만한 최고의 장소들", phrases: ["Best Places", "to Visit", "in Chuncheon"] },
+                { en: "Gimyujeong Rail Bike", ko: "김유정 레일 바이크", phrases: ["Gimyujeong Rail Bike"] },
+                { en: "Soyanggang Skywalk", ko: "소양강 스카이워크", phrases: ["Soyanggang Skywalk"] },
+                { en: "Memorial Hall for Ethiopian Soldiers in the Korean War", ko: "에티오피아 한국전 참전 기념관", phrases: ["Memorial Hall", "for Ethiopian Soldiers", "in the Korean War"] },
+                { en: "Dakgalbi Restaurants", ko: "닭갈비 식당", phrases: ["Dakgalbi Restaurants"] },
+                { en: "Today’s focus is the Memorial Hall for Ethiopian Soldiers in the Korean War.", ko: "오늘 중점적으로 소개할 곳은 에티오피아군의 한국전 참전 기념관이에요.", phrases: ["Today’s focus is", "the Memorial Hall", "for Ethiopian Soldiers", "in the Korean War."] },
+                { en: "On the first floor of the hall, visitors can see the names and pictures of the brave soldiers.", ko: "기념관 1층에서 방문객들은 용감한 군인들의 이름과 사진을 볼 수 있어요.", phrases: ["On the first floor", "of the hall,", "visitors can see", "the names and pictures", "of the brave soldiers."] },
+                { en: "On the second floor, Ethiopian cultural items are displayed.", ko: "2층에는 에티오피아의 문화 유물들이 전시되어 있어요.", phrases: ["On the second floor,", "Ethiopian cultural items", "are displayed."] },
+                { en: "If you want to know about the special history between Korea and Ethiopia, please click on the link below.", ko: "한국과 에티오피아 사이의 특별한 역사에 대해 알고 싶으면, 아래 링크를 클릭해 주세요.", phrases: ["If you want to know", "about the special history", "between Korea and Ethiopia,", "please click", "on the link below."] },
+                { en: "Friendship Across the World", ko: "국경을 뛰어넘은 우정", phrases: ["Friendship", "Across the World"] },
+                { en: "Ethiopia and Korea are far apart on the map,", ko: "에티오피아와 한국은 지도상으로는 멀리 떨어져 있지만,", phrases: ["Ethiopia and Korea", "are far apart", "on the map,"] },
+                { en: "but they have had strong ties for many years.", ko: "오랜 세월 동안 강한 유대 관계를 맺어 왔다.", phrases: ["but they have had", "strong ties", "for many years."] },
+                { en: "Ethiopia was the only African country to send soldiers during the Korean War.", ko: "에티오피아는 한국 전쟁 중 군인들을 보낸 유일한 아프리카 국가였다.", phrases: ["Ethiopia was", "the only African country", "to send soldiers", "during the Korean War."] },
+                { en: "Ethiopian soldiers fought many battles in Chuncheon and never lost.", ko: "에티오피아 군인들은 춘천에서 많은 전투를 치렀고 결코 진 적이 없었다.", phrases: ["Ethiopian soldiers", "fought many battles", "in Chuncheon", "and never lost."] },
+                { en: "During the war, some Korean children lost their parents.", ko: "전쟁 중, 일부 한국 어린이들이 부모를 잃었다.", phrases: ["During the war,", "some Korean children", "lost their parents."] },
+                { en: "Ethiopian soldiers used their own money to help them.", ko: "에티오피아 군인들은 그들을 돕기 위해 자신들의 돈을 썼다.", phrases: ["Ethiopian soldiers", "used their own money", "to help them."] },
+                { en: "In the 2000s, Chuncheon became the sister city of Addis Ababa, the capital city of Ethiopia.", ko: "2000년대에 춘천은 에티오피아의 수도인 아디스아바바의 자매 도시가 되었다.", phrases: ["In the 2000s,", "Chuncheon became", "the sister city", "of Addis Ababa,", "the capital city of Ethiopia."] },
+                { en: "Each city built a memorial hall to honor the Ethiopian soldiers who fought in the Korean War.", ko: "각 도시는 한국 전쟁에서 싸운 에티오피아 군인들을 기리기 위해 기념관을 세웠다.", phrases: ["Each city built", "a memorial hall", "to honor the Ethiopian soldiers", "who fought in the Korean War."] },
+                { en: "The Memorial Hall in Chuncheon was built in 2006.", ko: "춘천에 있는 기념관은 2006년에 지어졌다.", phrases: ["The Memorial Hall", "in Chuncheon", "was built in 2006."] },
+                { en: "It looks like a traditional Ethiopian house.", ko: "그것은 에티오피아의 전통 가옥처럼 생겼다.", phrases: ["It looks like", "a traditional", "Ethiopian house."] },
+                { en: "It has three round roofs.", ko: "세 개의 둥근 지붕이 있다.", phrases: ["It has", "three round roofs."] },
+                { en: "Here, you can feel the strong friendship between the two countries.", ko: "이곳에서 여러분은 두 나라 사이의 굳건한 우정을 느낄 수 있다.", phrases: ["Here,", "you can feel", "the strong friendship", "between the two countries."] },
+                { en: "In the next story, I will introduce Soyanggang Skywalk", ko: "다음 이야기에서는, 소양강 스카이워크를 소개하고", phrases: ["In the next story,", "I will introduce", "Soyanggang Skywalk"] },
+                { en: "and share some useful tips for traveling there.", ko: "그곳을 여행하는 데 유용한 정보를 공유할게요.", phrases: ["and share", "some useful tips", "for traveling there."] },
+                { en: "You don’t want to miss it!", ko: "놓치면 안 돼요!", phrases: ["You don’t want", "to miss it!"] }
+            ],
+            6: [
+                { en: "When did you last try something new?", ko: "너는 언제 마지막으로 새로운 것을 시도했니?", phrases: ["When did you", "last try", "something new?"] },
+                { en: "I have always wanted to learn skateboarding.", ko: "나는 항상 스케이트보드 타기를 배우고 싶어 했어.", phrases: ["I have always wanted", "to learn skateboarding."] },
+                { en: "Today, I took the first step toward becoming a cool skater boy.", ko: "오늘, 나는 멋진 스케이터 소년 되기를 향하여 첫걸음을 내디뎠어.", phrases: ["Today,", "I took the first step", "toward becoming", "a cool skater boy."] },
+                { en: "I joined a one-day skateboarding class.", ko: "일일 스케이트보드 타기 수업에 참여했거든.", phrases: ["I joined", "a one-day", "skateboarding class."] },
+                { en: "When I got to the skatepark, I saw a guy skateboarding in a big bowl.", ko: "스케이트파크에 도착했을 때, 나는 한 남자가 큰 볼(깊고 둥근 형태의 구조물)에서 스케이트보드를 타고 있는 것을 보았어.", phrases: ["When I got to", "the skatepark,", "I saw a guy", "skateboarding in a big bowl."] },
+                { en: "He was Eric, my skateboarding teacher.", ko: "그는 나의 스케이트보드 타기 선생님인 Eric이었어.", phrases: ["He was Eric,", "my skateboarding teacher."] },
+                { en: "He jumped into the air and flipped the board.", ko: "그는 공중으로 뛰어올라 보드를 휙 뒤집었어.", phrases: ["He jumped", "into the air", "and flipped the board."] },
+                { en: "He landed cleanly.", ko: "그는 깔끔하게 착지했지.", phrases: ["He landed", "cleanly."] },
+                { en: "He reminded me of a surfer on a big wave.", ko: "그는 큰 파도를 타는 서퍼를 떠올리게 했어.", phrases: ["He reminded me", "of a surfer", "on a big wave."] },
+                { en: "I learned from a blog that skateboarding began with surfers in California.", ko: "나는 한 블로그에서 스케이트보드 타기가 캘리포니아의 서퍼들로부터 시작되었다는 것을 알게 되었어.", phrases: ["I learned from a blog", "that skateboarding began", "with surfers", "in California."] },
+                { en: "They wanted to surf on land, too, so they put wheels on wooden boards.", ko: "그들은 땅에서도 서핑을 하고 싶어서 나무판자에 바퀴를 달았어.", phrases: ["They wanted to surf", "on land, too,", "so they put wheels", "on wooden boards."] },
+                { en: "When there was little rain in California, skateboarders used empty swimming pools as their skateparks.", ko: "캘리포니아에 비가 거의 오지 않았을 때, 스케이트보드 타는 사람들은 빈 수영장을 그들의 스케이트파크로 이용했어.", phrases: ["When there was", "little rain in California,", "skateboarders used", "empty swimming pools", "as their skateparks."] },
+                { en: "Before the lesson, Eric and I did a warm-up exercise.", ko: "수업 전에, Eric과 나는 준비 운동을 했어.", phrases: ["Before the lesson,", "Eric and I did", "a warm-up exercise."] },
+                { en: "Eric told me, “Safety is the most important thing, Ian!”", ko: "Eric은 나에게 “안전이 가장 중요한 거야, Ian!”이라고 말했어.", phrases: ["Eric told me,", "“Safety is", "the most important thing,", "Ian!”"] },
+                { en: "Then, he made me wear a helmet and pads to stay safe during the class.", ko: "그런 다음 그는 수업 중에 안전하게 있기 위해 나에게 헬멧과 보호대를 착용하게 했어.", phrases: ["Then,", "he made me wear", "a helmet and pads", "to stay safe", "during the class."] },
+                { en: "The lesson finally began.", ko: "수업이 마침내 시작되었어.", phrases: ["The lesson", "finally began."] },
+                { en: "Eric taught me the most basic skill, the “push-off.”", ko: "Eric은 나에게 가장 기초적인 기술인 ‘푸시 오프’를 가르쳐 주었어.", phrases: ["Eric taught me", "the most basic skill,", "the “push-off.”"] },
+                { en: "To push off on the skateboard, I put one foot on the board and pushed against the ground with the other foot.", ko: "스케이트보드 위에서 푸시 오프를 하기 위해서, 나는 한 발을 보드에 올리고 다른 발로 땅을 밀었어.", phrases: ["To push off", "on the skateboard,", "I put one foot", "on the board", "and pushed against the ground", "with the other foot."] },
+                { en: "Tada! I moved forward!", ko: "짜잔! 나는 앞으로 나아갔어!", phrases: ["Tada!", "I moved forward!"] },
+                { en: "This skill looked simple, but I fell down many times.", ko: "이 기술은 간단해 보였지만, 나는 여러 번 넘어졌어.", phrases: ["This skill", "looked simple,", "but I fell down", "many times."] },
+                { en: "With practice, I was able to keep my balance and ride.", ko: "연습을 통해 나는 균형을 잡고 탈 수 있었어.", phrases: ["With practice,", "I was able to", "keep my balance", "and ride."] },
+                { en: "I heard Eric cheering for me.", ko: "나는 Eric이 나를 응원하는 소리를 들었어.", phrases: ["I heard Eric", "cheering for me."] },
+                { en: "After the lesson, I realized skateboarding is more than just a cool-looking sport.", ko: "수업 후에, 나는 스케이트보드 타기가 단지 멋져 보이는 스포츠 그 이상이라는 것을 깨달았어.", phrases: ["After the lesson,", "I realized", "skateboarding is more than", "just a cool-looking sport."] },
+                { en: "It makes me feel free.", ko: "그것은 나에게 자유를 느끼게 해 줘.", phrases: ["It makes me", "feel free."] },
+                { en: "I am glad that I started my skateboarding journey today.", ko: "내가 오늘 스케이트보드 타기 여정을 시작해서 기뻐.", phrases: ["I am glad", "that I started", "my skateboarding journey", "today."] },
+                { en: "My shoes and jeans got dirty, but I felt great.", ko: "내 신발과 청바지는 더러워졌지만, 나는 기분이 아주 좋았어.", phrases: ["My shoes and jeans", "got dirty,", "but I felt great."] },
+                { en: "It shows I practiced really hard.", ko: "그것은 내가 정말 열심히 연습했다는 것을 보여 주는 것이니까.", phrases: ["It shows", "I practiced", "really hard."] },
+                { en: "I hope to skate better and more freely someday.", ko: "나는 언젠가는 더 잘, 그리고 더 자유롭게 스케이트보드를 탈 수 있으면 좋겠어.", phrases: ["I hope to skate", "better and more freely", "someday."] },
+                { en: "Do you want to try skateboarding, too?", ko: "너도 스케이트보드 타기를 해 보고 싶니?", phrases: ["Do you want", "to try skateboarding,", "too?"] },
+                { en: "Just visit the nearest skatepark!", ko: "일단 가장 가까운 스케이트파크를 방문해 봐!", phrases: ["Just visit", "the nearest", "skatepark!"] }
+            ],
+            7: [
+                { en: "When it gets cold outside, people put on jackets and gloves.", ko: "바깥 날씨가 추워지면 사람들은 외투를 입고 장갑을 껴요.", phrases: ["When it gets", "cold outside,", "people put on", "jackets and gloves."] },
+                { en: "Some people drink hot chocolate.", ko: "어떤 사람들은 핫 초콜릿을 마셔요.", phrases: ["Some people", "drink", "hot chocolate."] },
+                { en: "Others stay inside under blankets.", ko: "또 다른 사람들은 실내에서 담요 아래 있어요.", phrases: ["Others stay inside", "under blankets."] },
+                { en: "But how about animals?", ko: "그런데 동물들은 어떨까요?", phrases: ["But how about", "animals?"] },
+                { en: "How do they survive the cold?", ko: "그들은 어떻게 추위를 견뎌 낼까요?", phrases: ["How do they", "survive", "the cold?"] },
+                { en: "Let’s find out some of their survival secrets.", ko: "그들의 생존 비결을 몇 가지 알아봅시다.", phrases: ["Let’s find out", "some of", "their survival secrets."] },
+                { en: "First, meet polar bears.", ko: "먼저, 북극곰을 만나 보세요.", phrases: ["First,", "meet polar bears."] },
+                { en: "Did you know that polar bears have clear fur?", ko: "여러분은 북극곰이 투명한 털을 갖고 있는 것을 알고 있었나요?", phrases: ["Did you know", "that polar bears", "have clear fur?"] },
+                { en: "Their fur only looks white to us because of the sunlight.", ko: "그들의 털은 햇빛 때문에 우리에게 흰색으로 보일 뿐입니다.", phrases: ["Their fur", "only looks white to us", "because of the sunlight."] },
+                { en: "So, why is clear fur helpful in the cold?", ko: "그렇다면, 왜 투명한 털이 추위에 도움이 될까요?", phrases: ["So,", "why is clear fur", "helpful", "in the cold?"] },
+                { en: "It lets more sunlight reach their skin.", ko: "그것은 더 많은 햇빛이 북극곰의 피부에 닿게 해 줍니다.", phrases: ["It lets", "more sunlight", "reach their skin."] },
+                { en: "Here comes another interesting fact about polar bears.", ko: "여기에 북극곰에 대한 또 다른 흥미로운 사실이 있어요.", phrases: ["Here comes", "another interesting fact", "about polar bears."] },
+                { en: "They have black skin!", ko: "그들은 검은색 피부를 가지고 있어요!", phrases: ["They have", "black skin!"] },
+                { en: "Dark skin helps them take in more heat.", ko: "어두운 피부는 그들이 더 많은 열을 흡수하는 것을 도와줍니다.", phrases: ["Dark skin", "helps them", "take in", "more heat."] },
+                { en: "Having clear fur and black skin keeps polar bears warm.", ko: "투명한 털과 검은색 피부를 가지고 있는 것이 북극곰을 따뜻하게 유지해 줍니다.", phrases: ["Having clear fur", "and black skin", "keeps polar bears", "warm."] },
+                { en: "Arctic foxes have dark skin and fur, too.", ko: "북극여우도 어두운 피부, 그리고 털을 가지고 있어요.", phrases: ["Arctic foxes", "have dark skin", "and fur, too."] },
+                { en: "They also use their big tails to keep themselves warm.", ko: "그들은 또한 큰 꼬리를 이용하여 자신들을 따뜻하게 유지해요.", phrases: ["They also use", "their big tails", "to keep themselves", "warm."] },
+                { en: "When they sleep, they wrap their tails around their bodies like blankets!", ko: "잠을 잘 때, 그들은 꼬리를 마치 담요처럼 몸 주위에 두른답니다!", phrases: ["When they sleep,", "they wrap their tails", "around their bodies", "like blankets!"] },
+                { en: "However, they may lose body heat through their ears in the cold air.", ko: "그런데 그들은 차가운 공기 속에서는 귀를 통해 체온을 잃을 수가 있어요.", phrases: ["However,", "they may lose", "body heat", "through their ears", "in the cold air."] },
+                { en: "Unlike other foxes in warm places, arctic foxes have small ears.", ko: "따뜻한 곳에 사는 다른 여우들과 달리, 북극여우들은 작은 귀를 가졌어요.", phrases: ["Unlike other foxes", "in warm places,", "arctic foxes", "have small ears."] },
+                { en: "Their ears are so small that they can help the foxes lose less heat.", ko: "그들의 귀는 정말 작아서 여우들이 열을 덜 잃게 도와줍니다.", phrases: ["Their ears", "are so small", "that they can help", "the foxes", "lose less heat."] },
+                { en: "Now, what about animals without fur?", ko: "이제, 털이 없는 동물들은 어떨까요?", phrases: ["Now,", "what about", "animals without fur?"] },
+                { en: "How do whales live in icy water?", ko: "고래들은 어떻게 얼음처럼 찬 물속에서 살까요?", phrases: ["How do whales", "live", "in icy water?"] },
+                { en: "The winter sea is so cold that you cannot swim there, even for a second.", ko: "겨울 바다는 너무 차가워서 여러분은 거기에서 단 1초도 수영할 수 없답니다.", phrases: ["The winter sea", "is so cold", "that you cannot swim there,", "even for a second."] },
+                { en: "However, whales have a special way to stay warm in icy water.", ko: "그러나 고래들은 얼음처럼 찬 물에서 따뜻하게 지내는 특별한 방법이 있어요.", phrases: ["However,", "whales have", "a special way", "to stay warm", "in icy water."] },
+                { en: "They have thick fat under their skin.", ko: "그들은 피부 아래에 두꺼운 지방을 가지고 있습니다.", phrases: ["They have", "thick fat", "under their skin."] },
+                { en: "The fat can be more than 40 cm thick.", ko: "그 지방은 40센티미터보다 더 두꺼울 수 있어요.", phrases: ["The fat can be", "more than", "40 cm thick."] },
+                { en: "It covers their bodies and keeps them warm.", ko: "그것은 고래들의 몸을 감싸 그들을 따뜻하게 유지해 줍니다.", phrases: ["It covers", "their bodies", "and keeps them", "warm."] },
+                { en: "The fat also gives whales energy when they cannot find food for a long time.", ko: "그 지방은 또한 고래들이 오랫동안 먹이를 찾지 못할 때 에너지를 공급해 줍니다.", phrases: ["The fat also gives", "whales energy", "when they cannot find food", "for a long time."] },
+                { en: "Lastly, in Alaska, winters can be too cold for wood frogs.", ko: "마지막으로, 알래스카에서는 겨울이 송장개구리들에게 매우 추울 수 있어요.", phrases: ["Lastly,", "in Alaska,", "winters can be", "too cold", "for wood frogs."] },
+                { en: "What do they do to survive the freezing weather?", ko: "그들은 얼어붙을 듯이 추운 날씨를 견뎌 내기 위해 무엇을 할까요?", phrases: ["What do they do", "to survive", "the freezing weather?"] },
+                { en: "These frogs freeze themselves!", ko: "이 개구리들은 스스로를 얼려 버린답니다!", phrases: ["These frogs", "freeze themselves!"] },
+                { en: "Up to 60 percent of their bodies freeze.", ko: "그들 몸의 60퍼센트까지 얼어요.", phrases: ["Up to 60 percent", "of their bodies", "freeze."] },
+                { en: "They stop breathing, and their heart stops beating.", ko: "그들은 숨쉬기를 멈추고 심장 박동도 멈춘답니다.", phrases: ["They stop breathing,", "and their heart", "stops beating."] },
+                { en: "But don’t worry. When spring comes, they come back to life.", ko: "그러나 걱정하지 마세요. 봄이 오면, 그들은 다시 살아납니다.", phrases: ["But don’t worry.", "When spring comes,", "they come back", "to life."] },
+                { en: "Nature is so amazing.", ko: "자연은 정말 경이로워요.", phrases: ["Nature", "is", "so amazing."] }
+            ],
+            8: [
+                { en: "Emily’s family is on vacation in Australia.", ko: "Emily의 가족은 호주에서 휴가 중이에요.", phrases: ["Emily’s family", "is on vacation", "in Australia."] },
+                { en: "They are traveling for a week.", ko: "그들은 일주일 동안 여행하고 있어요.", phrases: ["They are traveling", "for a week."] },
+                { en: "They are talking about their plans for the day.", ko: "그들은 오늘 하루 계획에 대해서 이야기하고 있어요.", phrases: ["They are talking", "about their plans", "for the day."] },
+                { en: "Guys, what do you want to do today?", ko: "얘들아, 오늘은 뭐 하고 싶니?", phrases: ["Guys,", "what do you want", "to do today?"] },
+                { en: "I really want to see koalas.", ko: "저는 코알라를 정말 보고 싶어요.", phrases: ["I really want", "to see", "koalas."] },
+                { en: "They’re so cute!", ko: "코알라는 진짜 귀여워요!", phrases: ["They’re", "so cute!"] },
+                { en: "There may be some koala tours.", ko: "코알라 투어가 몇 개 있을지도 몰라요.", phrases: ["There may be", "some", "koala tours."] },
+                { en: "Should I ask for information at the desk?", ko: "제가 안내 데스크에 정보를 물어볼까요?", phrases: ["Should I ask", "for information", "at the desk?"] },
+                { en: "You don’t have to.", ko: "그럴 필요 없단다.", phrases: ["You", "don’t have to."] },
+                { en: "There are three tour brochures here: Smile Tour, Star Tour, and Top Tour.", ko: "여기 관광 안내 책자 세 개가 있어. Smile Tour, Star Tour, Top Tour야.", phrases: ["There are", "three tour brochures here:", "Smile Tour,", "Star Tour,", "and Top Tour."] },
+                { en: "Let’s see which koala tour will be the best for us.", ko: "어느 코알라 투어가 우리에게 가장 좋을지 살펴보자.", phrases: ["Let’s see", "which koala tour", "will be the best", "for us."] },
+                { en: "First, let me compare the prices.", ko: "먼저 제가 가격을 비교해 볼게요.", phrases: ["First,", "let me compare", "the prices."] },
+                { en: "The price of Smile Tour looks really good!", ko: "Smile Tour의 가격이 정말 괜찮아 보여요!", phrases: ["The price", "of Smile Tour", "looks", "really good!"] },
+                { en: "It’s only $25.", ko: "25달러밖에 안 해요.", phrases: ["It’s only", "$25."] },
+                { en: "Oh, it’s $25 for one hour.", ko: "오, 그건 한 시간에 25달러야.", phrases: ["Oh,", "it’s $25", "for one hour."] },
+                { en: "Look, the other tours are all 3 hours.", ko: "봐, 다른 투어들은 모두 3시간짜리인걸.", phrases: ["Look,", "the other tours", "are all", "3 hours."] },
+                { en: "Right. We need to find out the price for the same amount of time.", ko: "맞아. 우리는 같은 시간에 대한 가격을 알아내야 해.", phrases: ["Right.", "We need to find out", "the price", "for the same amount of time."] },
+                { en: "Okay, but how can we do that?", ko: "알겠어요, 그런데 어떻게 알아낼 수 있어요?", phrases: ["Okay,", "but how can we", "do that?"] },
+                { en: "Let’s start with Smile Tour.", ko: "Smile Tour부터 시작해 봐요.", phrases: ["Let’s start", "with", "Smile Tour."] },
+                { en: "If we take a 3-hour tour, it will cost $75.", ko: "우리가 3시간짜리 투어를 한다면, 75달러 비용이 들 거예요.", phrases: ["If we take", "a 3-hour tour,", "it will cost", "$75."] },
+                { en: "Star Tour is $60 for 3 hours, and Top Tour is $110.", ko: "Star Tour는 3시간에 60달러이고, Top Tour는 110달러네요.", phrases: ["Star Tour is", "$60 for 3 hours,", "and Top Tour is", "$110."] },
+                { en: "Wow, now Star Tour is the cheapest!", ko: "와, 이제 Star Tour가 가장 저렴하네요!", phrases: ["Wow,", "now Star Tour", "is the cheapest!"] },
+                { en: "Right, but we have one more thing to check.", ko: "맞아, 하지만 우리가 확인해야 할 것이 한 가지 더 있지.", phrases: ["Right,", "but we have", "one more thing", "to check."] },
+                { en: "What is it, Mom?", ko: "그게 뭔데요, 엄마?", phrases: ["What", "is it,", "Mom?"] },
+                { en: "The price of Top Tour is $110, but it’s for two people.", ko: "Top Tour의 가격은 110달러지만, 그것은 두 사람 기준이야.", phrases: ["The price", "of Top Tour is $110,", "but it’s", "for two people."] },
+                { en: "Really? Where does it say that?", ko: "정말이에요? 그게 어디에 쓰여 있어요?", phrases: ["Really?", "Where does it", "say that?"] },
+                { en: "Here, it says $110 “per pair.”", ko: "여기, ‘두 사람당’ 110달러라고 쓰여 있어.", phrases: ["Here,", "it says", "$110 “per pair.”"] },
+                { en: "Do you know what a pair is? It means two.", ko: "너는 pair가 뭔지 아니? 그것은 둘을 의미해.", phrases: ["Do you know", "what a pair is?", "It means two."] },
+                { en: "Oh, now I know what to do!", ko: "아, 이제 저는 무엇을 해야 할지 알겠어요!", phrases: ["Oh,", "now I know", "what to do!"] },
+                { en: "Divide 110 by 2 to get the price for one person.", ko: "한 사람당 가격을 알아내기 위해 110을 2로 나누어요.", phrases: ["Divide 110", "by 2", "to get the price", "for one person."] },
+                { en: "It’s $55! Wow, it’s cheaper than Star Tour.", ko: "그건 55달러네요! 와, 이게 Star Tour보다 더 저렴해요.", phrases: ["It’s $55!", "Wow,", "it’s cheaper than", "Star Tour."] },
+                { en: "That’s amazing! Let me make a chart.", ko: "놀라워요! 제가 표를 만들어 볼게요.", phrases: ["That’s amazing!", "Let me make", "a chart."] },
+                { en: "Nick, you did a good job.", ko: "Nick, 아주 잘했다.", phrases: ["Nick,", "you did", "a good job."] },
+                { en: "Now you can see why Top Tour is the cheapest.", ko: "이제 Top Tour가 왜 가장 저렴한지 알겠지.", phrases: ["Now you can see", "why Top Tour", "is the cheapest."] },
+                { en: "Let’s go with this one.", ko: "이것으로 결정하자.", phrases: ["Let’s go", "with this one."] }
+            ]
+        };
+
+        let studentId = "";
+        let studentName = "";
+        let currentUnit = 5;
+        let currentMode = 1;
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        
+        let poolBlocks = [];
+        let arrangedBlocks = [];
+
+        function showPage(pageId) {
+            document.getElementById('page-login').classList.add('hidden');
+            document.getElementById('page-unit').classList.add('hidden');
+            document.getElementById('page-mode').classList.add('hidden');
+            document.getElementById('page-learn').classList.add('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        function login() {
+            const sId = document.getElementById('input-student-id').value.trim();
+            const sName = document.getElementById('input-student-name').value.trim();
+            
+            if (!sId || !sName) {
+                Swal.fire({ icon: 'warning', title: '입력 오류', text: '학번과 이름을 모두 입력해주세요!' });
+                return;
+            }
+            studentId = sId;
+            studentName = sName;
+            
+            const userInfoStr = `${studentId} ${studentName}`;
+            document.getElementById('user-info-display').innerText = userInfoStr;
+            document.getElementById('user-info-display').classList.remove('hidden');
+            
+            showPage('page-unit');
+            sendToGoogleSheets('로그인', 0, 0);
+        }
+
+        function selectUnit(unit) {
+            currentUnit = unit;
+            document.getElementById('mode-title-unit').innerText = `Lesson ${unit} 학습 방식`;
+            showPage('page-mode');
+        }
+
+        function startLearning(mode) {
+            currentMode = mode;
+            currentQuestions = db[currentUnit];
+            currentQuestionIndex = 0;
+            
+            const modeNames = ["", "한 줄 해석", "따라 치기", "구 배열하기", "단어 배열하기", "영작하기"];
+            document.getElementById('badge-mode').innerText = `${modeNames[mode]}`;
+            
+            showPage('page-learn');
+            renderQuestion();
+        }
+
+        function normalizeText(text) {
+            // 대소문자 무시, 구두점 제거하여 비교
+            return text.toLowerCase().replace(/[.,?!'“"”]/g, '').replace(/\s+/g, ' ').trim();
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderQuestion() {
+            const q = currentQuestions[currentQuestionIndex];
+            const area = document.getElementById('interaction-area');
+            const btnCheck = document.getElementById('btn-check');
+            const btnNext = document.getElementById('btn-next');
+            const feedback = document.getElementById('feedback-area');
+
+            // 진행 상태 업데이트
+            document.getElementById('learning-progress').innerText = `${currentQuestionIndex + 1} / ${currentQuestions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex) / currentQuestions.length) * 100}%`;
+
+            // 초기화
+            area.innerHTML = '';
+            feedback.classList.add('hidden');
+            feedback.className = 'mt-4 hidden p-4 rounded-xl font-medium text-center';
+            document.getElementById('btn-hint').classList.add('hidden');
+            
+            document.getElementById('question-ko').innerText = q.ko;
+            
+            btnCheck.classList.remove('hidden');
+            btnNext.classList.add('hidden');
+
+            if (currentMode === 1) {
+                area.innerHTML = `<div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100"><p class="text-2xl font-semibold text-indigo-900 leading-relaxed break-keep">${q.en}</p></div>`;
+                btnCheck.classList.add('hidden');
+                btnNext.classList.remove('hidden');
+            } 
+            else if (currentMode === 2 || currentMode === 5) {
+                if (currentMode === 2) {
+                    area.innerHTML += `<div class="mb-4 text-slate-500 text-lg font-medium">${q.en}</div>`;
+                }
+                area.innerHTML += `<textarea id="answer-input" rows="3" class="w-full border-2 border-slate-300 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-lg" placeholder="${currentMode === 2 ? '위 문장을 똑같이 입력하세요.' : '영어로 작문해보세요.'}"></textarea>`;
+                setTimeout(() => document.getElementById('answer-input').focus(), 100);
+            }
+            else if (currentMode === 3 || currentMode === 4) {
+                let parts = [];
+                if (currentMode === 3 && q.phrases) {
+                    parts = [...q.phrases];
+                } else {
+                    parts = q.en.split(' ');
+                }
+                
+                poolBlocks = shuffle(parts.map((text, id) => ({ id, text })));
+                arrangedBlocks = [];
+                
+                area.innerHTML = `
+                    <p class="text-sm text-slate-500 mb-2 font-semibold">완성된 문장 영역 (아래 블록을 클릭하여 위로 올리세요)</p>
+                    <div id="answer-box" class="answer-area flex flex-wrap gap-2 p-4 bg-white rounded-xl mb-6 shadow-inner"></div>
+                    <p class="text-sm text-slate-500 mb-2 font-semibold">선택할 블록 영역</p>
+                    <div id="pool-box" class="word-pool flex flex-wrap gap-2 p-4 bg-slate-100 rounded-xl"></div>
+                `;
+                renderBlocks();
+            }
+        }
+
+        function renderBlocks() {
+            const poolBox = document.getElementById('pool-box');
+            const answerBox = document.getElementById('answer-box');
+            poolBox.innerHTML = '';
+            answerBox.innerHTML = '';
+
+            poolBlocks.forEach(block => {
+                const el = document.createElement('div');
+                el.className = 'block-item bg-white border-2 border-slate-300 text-slate-700 px-4 py-2 rounded-lg font-semibold shadow-sm hover:border-indigo-400 hover:text-indigo-600';
+                el.innerText = block.text;
+                el.onclick = () => moveBlock(block.id, 'pool');
+                poolBox.appendChild(el);
+            });
+
+            arrangedBlocks.forEach(block => {
+                const el = document.createElement('div');
+                el.className = 'block-item bg-indigo-600 text-white border-2 border-indigo-700 px-4 py-2 rounded-lg font-semibold shadow-sm hover:bg-indigo-700';
+                el.innerText = block.text;
+                el.onclick = () => moveBlock(block.id, 'answer');
+                answerBox.appendChild(el);
+            });
+        }
+
+        function moveBlock(id, source) {
+            if (source === 'pool') {
+                const idx = poolBlocks.findIndex(b => b.id === id);
+                arrangedBlocks.push(poolBlocks[idx]);
+                poolBlocks.splice(idx, 1);
+            } else {
+                const idx = arrangedBlocks.findIndex(b => b.id === id);
+                poolBlocks.push(arrangedBlocks[idx]);
+                arrangedBlocks.splice(idx, 1);
+            }
+            renderBlocks();
+        }
+
+        function checkAnswer() {
+            const q = currentQuestions[currentQuestionIndex];
+            let studentAnswer = "";
+
+            if (currentMode === 2 || currentMode === 5) {
+                studentAnswer = document.getElementById('answer-input').value;
+            } else if (currentMode === 3 || currentMode === 4) {
+                studentAnswer = arrangedBlocks.map(b => b.text).join(' ');
+            }
+
+            const isCorrect = normalizeText(studentAnswer) === normalizeText(q.en);
+            const feedback = document.getElementById('feedback-area');
+            
+            feedback.classList.remove('hidden');
+            if (isCorrect) {
+                feedback.classList.add('bg-green-100', 'text-green-700');
+                feedback.classList.remove('bg-red-100', 'text-red-700');
+                feedback.innerHTML = `<i class="fas fa-check-circle mr-2"></i> 정답입니다! 완벽해요.`;
+                
+                document.getElementById('btn-check').classList.add('hidden');
+                document.getElementById('btn-next').classList.remove('hidden');
+                document.getElementById('btn-hint').classList.add('hidden');
+
+                // 정답 맞춤을 GAS에 기록 (비동기)
+                sendToGoogleSheets('정답', currentUnit, currentMode);
+            } else {
+                feedback.classList.add('bg-red-100', 'text-red-700');
+                feedback.classList.remove('bg-green-100', 'text-green-700');
+                
+                let helpText = "다시 한번 확인해보세요!";
+                if(currentMode === 5) {
+                    helpText = `다시 시도해보세요. (힌트: ${q.en.charAt(0)}...로 시작합니다)`;
+                }
+                feedback.innerHTML = `<i class="fas fa-times-circle mr-2"></i> 아쉽네요. ${helpText}`;
+                
+                // 오답일 경우 힌트보기 버튼 활성화
+                document.getElementById('btn-hint').classList.remove('hidden');
+            }
+        }
+
+        function showHint() {
+            const q = currentQuestions[currentQuestionIndex];
+            const feedback = document.getElementById('feedback-area');
+            let studentAnswer = "";
+
+            if (currentMode === 2 || currentMode === 5) {
+                studentAnswer = document.getElementById('answer-input').value;
+            } else if (currentMode === 3 || currentMode === 4) {
+                studentAnswer = arrangedBlocks.map(b => b.text).join(' ');
+            }
+
+            const normalize = (w) => w.toLowerCase().replace(/[.,?!'“"”]/g, '');
+            const studentWords = studentAnswer.trim().split(/\s+/).filter(w => w);
+            const correctWords = q.en.trim().split(/\s+/).filter(w => w);
+
+            let hintHTML = '<div class="text-left mt-3 p-4 bg-white rounded-xl border border-red-200 shadow-sm"><p class="text-sm text-slate-500 mb-2"><i class="fas fa-search text-red-400 mr-1"></i>틀린 부분이 밑줄 쳐져 있습니다:</p><div class="text-lg leading-relaxed break-keep">';
+
+            if (studentWords.length === 0) {
+                hintHTML += '<span class="text-slate-400">입력된 내용이 없습니다.</span>';
+            } else {
+                let sIdx = 0;
+                let cIdx = 0;
+
+                while (sIdx < studentWords.length) {
+                    let sWord = studentWords[sIdx];
+                    let normS = normalize(sWord);
+                    let normC = cIdx < correctWords.length ? normalize(correctWords[cIdx]) : null;
+
+                    if (normS === normC) {
+                        hintHTML += `<span class="text-slate-700">${sWord}</span> `;
+                        sIdx++;
+                        cIdx++;
+                    } else {
+                        // 학생이 단어를 빼먹었을 경우를 대비한 앞부분 탐색 (최대 2단어 look-ahead)
+                        let matchFound = false;
+                        for (let look = 1; look <= 2; look++) {
+                            if (cIdx + look < correctWords.length && normS === normalize(correctWords[cIdx + look])) {
+                                cIdx += look;
+                                matchFound = true;
+                                break;
+                            }
+                        }
+
+                        if (matchFound) {
+                            continue; // cIdx를 조정한 후 현재 학생 단어를 다시 비교
+                        }
+
+                        // 불일치 시 빨간색 굵은 밑줄 처리
+                        hintHTML += `<span class="underline decoration-red-500 decoration-[3px] text-red-600 font-bold">${sWord}</span> `;
+                        sIdx++;
+                        cIdx++;
+                    }
+                }
+            }
+            hintHTML += '</div></div>';
+
+            // 힌트 영역 추가 (중복 방지)
+            if (!feedback.innerHTML.includes('틀린 부분이 밑줄 쳐져 있습니다')) {
+                feedback.innerHTML += hintHTML;
+            }
+            
+            // 힌트 버튼 다시 숨기기
+            document.getElementById('btn-hint').classList.add('hidden');
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                sendToGoogleSheets('완료', currentUnit, currentMode);
+                Swal.fire({
+                    title: '학습 완료!',
+                    text: `Lesson ${currentUnit}의 ${currentMode}번 모드를 마스터했습니다!`,
+                    icon: 'success',
+                    confirmButtonText: '확인',
+                    confirmButtonColor: '#4f46e5'
+                }).then(() => {
+                    showPage('page-mode');
+                });
+            }
+        }
+
+        // [선생님이 요청하신 앱스스크립트 주소 적용 완료!]
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxLhH__yibJqs7QxehYF83xBcT_UTIQNBl5dOEnZRcjSqqcNcE59fnvhBPh-WizWEdT/exec";
+
+        function sendToGoogleSheets(action, unit, mode) {
+            if (!GAS_URL) return;
+
+            const payload = {
+                studentId: studentId,
+                studentName: studentName,
+                unit: unit,
+                mode: mode,
+                action: action
+            };
+
+            fetch(GAS_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                },
+                body: JSON.stringify(payload)
+            }).then(response => {
+                console.log("데이터 전송 성공", payload);
+            }).catch(error => {
+                console.error("데이터 전송 실패", error);
+            });
+        }
+    </script>
+</body>
+</html>
