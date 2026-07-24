@@ -273,29 +273,45 @@
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
             <!-- 내 아바타 미리보기 -->
-            <div class="md:col-span-2 bg-white p-6 rounded-3xl game-box flex flex-col items-center justify-center">
-                <h3 class="font-black text-xl mb-6 text-slate-500">내 캐릭터</h3>
+            <div class="md:col-span-2 bg-white p-6 rounded-3xl game-box flex flex-col items-center justify-center relative">
+                <h3 class="font-black text-xl mb-6 text-slate-500">캐릭터 꾸미기</h3>
                 <div id="preview-avatar" class="slime scale-[2] mb-12 mt-8">
                     <div class="item-slot" id="preview-item"></div>
                 </div>
-                <div class="font-bold text-center bg-indigo-50 text-indigo-700 p-3 rounded-xl text-sm w-full border-2 border-indigo-200">
-                    문제를 맞히고 코인을 모아<br>나만의 캐릭터를 꾸며보세요!
+                
+                <!-- 위치/크기 조절 컨트롤 -->
+                <div id="position-controls" class="w-full bg-indigo-50 p-3 rounded-xl border-2 border-indigo-200 mt-2 mb-4 hidden">
+                    <div class="text-sm font-bold text-indigo-700 mb-2 text-center"><i class="fas fa-arrows-alt"></i> 장식 위치/크기 조절</div>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <button onclick="moveItem('x', -5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-left"></i></button>
+                        <button onclick="moveItem('y', -5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-up"></i></button>
+                        <button onclick="moveItem('y', 5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-down"></i></button>
+                        <button onclick="moveItem('x', 5)" class="game-btn bg-white rounded-lg p-2 text-slate-700"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button onclick="moveItem('s', -0.1)" class="game-btn bg-white rounded-lg p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-minus"></i> 작게</button>
+                        <button onclick="moveItem('s', 0.1)" class="game-btn bg-white rounded-lg p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-plus"></i> 크게</button>
+                    </div>
                 </div>
+
+                <button id="btn-buy-equip" class="game-btn w-full bg-slate-200 text-slate-500 font-black py-4 rounded-xl cursor-not-allowed">
+                    아이템을 선택하세요
+                </button>
             </div>
 
             <!-- 상점 탭 및 목록 -->
-            <div class="md:col-span-3 bg-white p-4 rounded-3xl game-box flex flex-col h-[500px]">
-                <div class="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar" id="shop-tabs">
-                    <button onclick="changeShopTab('colors')" id="tab-colors" class="shop-tab-btn bg-indigo-500 text-white px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-indigo-700">컬러 🎨</button>
-                    <button onclick="changeShopTab('hats')" id="tab-hats" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">머리 🎩</button>
-                    <button onclick="changeShopTab('faces')" id="tab-faces" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">얼굴 👓</button>
-                    <button onclick="changeShopTab('accs')" id="tab-accs" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">장식 ✨</button>
+            <div class="md:col-span-3 bg-white p-4 rounded-3xl game-box flex flex-col h-[600px]">
+                <!-- 탭 버튼들 -->
+                <div class="flex overflow-x-auto gap-2 mb-4 pb-2 scrollbar-hide" style="scrollbar-width: none;">
+                    <button id="tab-colors" onclick="changeShopTab('colors')" class="shop-tab-btn active-tab bg-indigo-500 text-white px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-indigo-700">색상</button>
+                    <button id="tab-hats" onclick="changeShopTab('hats')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">머리</button>
+                    <button id="tab-faces" onclick="changeShopTab('faces')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">얼굴</button>
+                    <button id="tab-accs" onclick="changeShopTab('accs')" class="shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300">장식</button>
                 </div>
                 
-                <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar">
-                    <div class="grid grid-cols-2 gap-3" id="shop-content">
-                        <!-- JS로 렌더링 -->
-                    </div>
+                <!-- 아이템 리스트 -->
+                <div id="shop-content" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto pr-2 pb-4 flex-1">
+                    <!-- JS로 렌더링됨 -->
                 </div>
             </div>
         </div>
@@ -429,9 +445,16 @@
 
         // 게임화(상점, 코인) 데이터
         let coins = 0;
-        let myAvatar = { color: '#a7f3d0', hat: '', face: '', acc: '' };
+        let myAvatar = { 
+            color: '#a7f3d0', hat: '', face: '', acc: '',
+            offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4}, acc: {x:-35, y:20, s:1.4} }
+        };
         let purchasedItems = []; 
         let currentShopTab = 'colors';
+        
+        // 상점 미리보기용 상태 변수
+        let previewAvatar = null;
+        let selectedShopItem = null;
         
         function loadSaveData(id) {
             const saved = localStorage.getItem('eng_master_' + id);
@@ -442,9 +465,16 @@
                 purchasedItems = parsed.purchased || [];
                 // 구버전 마이그레이션 방어코드
                 if(myAvatar.item !== undefined) { myAvatar.hat = myAvatar.item; delete myAvatar.item; }
+                // 위치 오프셋 데이터가 없으면 기본값 세팅
+                if(!myAvatar.offsets) {
+                    myAvatar.offsets = { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4}, acc: {x:-35, y:20, s:1.4} };
+                }
             } else {
                 coins = 0;
-                myAvatar = { color: '#a7f3d0', hat: '', face: '', acc: '' };
+                myAvatar = { 
+                    color: '#a7f3d0', hat: '', face: '', acc: '',
+                    offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4}, acc: {x:-35, y:20, s:1.4} }
+                };
                 purchasedItems = [];
             }
             updateCoinDisplay();
@@ -467,8 +497,12 @@
             
             if (pageId === 'page-shop') {
                 document.getElementById('shop-coin-display').innerText = coins;
+                // 상점 입장 시 내 아바타 정보를 미리보기에 복사
+                previewAvatar = JSON.parse(JSON.stringify(myAvatar));
+                selectedShopItem = null;
                 renderShop();
-                applyAvatar();
+                applyPreviewAvatar();
+                updateBuyButton();
             }
         }
 
@@ -542,55 +576,65 @@
                 document.getElementById('btn-check').classList.add('hidden');
                 document.getElementById('btn-next').classList.remove('hidden');
                 document.getElementById('btn-next').innerText = "다음 읽기";
-            } else if (currentMode === 2 || currentMode === 5) {
-                if(currentMode === 5) hintEn.classList.add('hidden');
-                
-                // 복붙 방지 onpaste, oncopy 적용
-                area.innerHTML = `<textarea id="answer-input" rows="3" onpaste="return false;" oncopy="return false;" oncut="return false;" class="w-full border-4 border-slate-300 rounded-xl p-4 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors resize-none" placeholder="여기에 영어 문장을 입력하세요. (특수기호 무시)"></textarea>`;
-                document.getElementById('answer-input').focus();
-            } else if (currentMode === 3 || currentMode === 4) {
-                hintEn.classList.add('hidden');
-                let words = [];
-                if (currentMode === 3) {
-                    words = q.phrases ? [...q.phrases] : q.en.split(' ');
-                } else {
-                    words = q.en.split(' ');
+                area.classList.add('hidden'); // 학습하기 1번 모드 공백 제거
+            } else {
+                area.classList.remove('hidden'); // 다른 모드에서는 영역 다시 표시
+                if (currentMode === 2 || currentMode === 5) {
+                    if (currentMode === 5) hintEn.classList.add('hidden');
+                    
+                    // 영작/따라쓰기 모드 입력칸 생성 (이전 코드에서 누락된 부분 복구)
+                    area.innerHTML = '<input type="text" id="answer-input" class="w-full border-4 border-slate-800 rounded-xl p-4 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="여기에 정답을 입력하세요" autocomplete="off">';
+                    
+                    const answerInput = document.getElementById('answer-input');
+                    // 복사/붙여넣기 방지
+                    answerInput.onpaste = function(e) { e.preventDefault(); };
+                    answerInput.oncopy = function(e) { e.preventDefault(); };
+                    answerInput.focus();
+                    
+                } else if (currentMode === 3 || currentMode === 4) {
+                    hintEn.classList.add('hidden');
+                    let words = [];
+                    if (currentMode === 3) {
+                        words = q.phrases ? [...q.phrases] : q.en.split(' ');
+                    } else {
+                        words = q.en.split(' ');
+                    }
+                    
+                    let shuffled = shuffleArray([...words]);
+                    arrangedBlocks = [];
+                    
+                    const poolDiv = document.createElement('div');
+                    poolDiv.id = 'word-pool';
+                    poolDiv.className = 'flex flex-wrap justify-center gap-3 w-full mb-6 p-4 bg-slate-100 rounded-xl border-4 border-slate-200 min-h-[80px]';
+                    
+                    const answerDiv = document.createElement('div');
+                    answerDiv.id = 'answer-board';
+                    answerDiv.className = 'flex flex-wrap justify-center gap-3 w-full p-4 bg-indigo-50 rounded-xl border-4 border-indigo-200 min-h-[100px] border-dashed';
+                    
+                    shuffled.forEach(w => {
+                        const btn = document.createElement('button');
+                        btn.className = 'word-block bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2 rounded-lg text-lg';
+                        btn.innerText = w;
+                        btn.onclick = function() {
+                            if (btn.parentElement.id === 'word-pool') {
+                                answerDiv.appendChild(btn);
+                                arrangedBlocks.push(w);
+                            } else {
+                                poolDiv.appendChild(btn);
+                                arrangedBlocks = arrangedBlocks.filter(b => b !== w);
+                            }
+                        };
+                        poolDiv.appendChild(btn);
+                    });
+                    
+                    area.appendChild(poolDiv);
+                    area.appendChild(answerDiv);
                 }
-                
-                let shuffled = shuffleArray([...words]);
-                arrangedBlocks = [];
-                
-                const poolDiv = document.createElement('div');
-                poolDiv.id = 'word-pool';
-                poolDiv.className = 'flex flex-wrap justify-center gap-3 w-full mb-6 p-4 bg-slate-100 rounded-xl border-4 border-slate-200 min-h-[80px]';
-                
-                const answerDiv = document.createElement('div');
-                answerDiv.id = 'answer-board';
-                answerDiv.className = 'flex flex-wrap justify-center gap-3 w-full p-4 bg-indigo-50 rounded-xl border-4 border-indigo-200 min-h-[100px] border-dashed';
-                
-                shuffled.forEach(w => {
-                    const btn = document.createElement('button');
-                    btn.className = 'word-block bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2 rounded-lg text-lg';
-                    btn.innerText = w;
-                    btn.onclick = function() {
-                        if (btn.parentElement.id === 'word-pool') {
-                            answerDiv.appendChild(btn);
-                            arrangedBlocks.push(w);
-                        } else {
-                            poolDiv.appendChild(btn);
-                            arrangedBlocks = arrangedBlocks.filter(b => b !== w);
-                        }
-                    };
-                    poolDiv.appendChild(btn);
-                });
-                
-                area.appendChild(poolDiv);
-                area.appendChild(answerDiv);
             }
         }
 
         function cleanString(str) {
-            return str.replace(/[.,!?“”"']/g, '').toLowerCase().trim();
+            return str.replace(/[.,!?“”"'‘’]/g, '').toLowerCase().trim();
         }
 
         function checkAnswer() {
@@ -629,46 +673,80 @@
             area.innerHTML = ''; // 초기화
 
             const hintBox = document.createElement('div');
-            hintBox.className = 'bg-rose-50 border-4 border-rose-200 p-4 rounded-xl font-bold select-none';
+            hintBox.className = 'bg-rose-50 border-4 border-rose-200 p-4 rounded-xl font-bold select-none text-left';
             
             const correctWords = (currentMode === 3 && q.phrases ? q.phrases : q.en.split(' ')).map(w => w.trim());
             let inputWords = [];
+            let rawInput = '';
             
             if (currentMode === 2 || currentMode === 5) {
-                inputWords = document.getElementById('answer-input').value.split(/\s+/);
+                rawInput = document.getElementById('answer-input').value.trim();
+                inputWords = rawInput ? rawInput.split(/\s+/) : [];
             } else if (currentMode === 3 || currentMode === 4) {
                 inputWords = arrangedBlocks;
             }
 
-            let hintHTML = '<div class="text-sm text-rose-700 mb-2"><i class="fas fa-search"></i> 틀린 부분 확인:</div><div class="leading-loose text-lg">';
-            let buffer = [];
-            let currentIsCorrect = null;
+            let hintHTML = '<div class="text-sm text-rose-700 mb-2"><i class="fas fa-search"></i> 내가 쓴 답에서 틀린 부분 확인:</div>';
+            
+            if (inputWords.length === 0) {
+                hintHTML += '<div class="text-slate-500 italic mb-4">입력한 내용이 없습니다. 먼저 답을 입력해보세요!</div>';
+            } else {
+                hintHTML += '<div class="leading-loose text-lg mb-4">';
+                let buffer = [];
+                let currentIsCorrect = null;
 
-            // 버퍼에 쌓인 단어들을 모아서 한번에 렌더링 (밑줄 끊김 방지)
-            function flushBuffer() {
-                if (buffer.length === 0) return '';
-                const text = buffer.join(' ');
-                buffer = [];
-                if (currentIsCorrect) {
-                    return `<span class="text-slate-400 mx-1">${text}</span>`;
-                } else {
-                    return `<span class="error-group">${text}</span>`;
+                function flushBuffer() {
+                    if (buffer.length === 0) return '';
+                    const text = buffer.join(' ');
+                    buffer = [];
+                    if (currentIsCorrect) {
+                        return `<span class="text-slate-500 mx-1">${text}</span>`;
+                    } else {
+                        return `<span class="error-group">${text}</span>`;
+                    }
                 }
+
+                // 학생이 입력한 단어(inputWords)를 기준으로 렌더링 (정답 노출 방지)
+                inputWords.forEach((iw, idx) => {
+                    const isCorrect = (idx < correctWords.length && cleanString(iw) === cleanString(correctWords[idx]));
+                    
+                    if (currentIsCorrect !== isCorrect) {
+                        hintHTML += flushBuffer();
+                        currentIsCorrect = isCorrect;
+                    }
+                    buffer.push(iw); // 학생이 쓴 단어를 화면에 표시
+                });
+                
+                hintHTML += flushBuffer();
+                hintHTML += '</div>';
             }
 
-            correctWords.forEach((cw, idx) => {
-                const isCorrect = (idx < inputWords.length && cleanString(cw) === cleanString(inputWords[idx]));
+            // 영작 모드(5)인 경우, 정답을 다 알려주지 않고 '첫 글자 마스킹 힌트'를 제공
+            if (currentMode === 5) {
+                hintHTML += '<div class="text-sm text-indigo-700 mb-2 mt-4 border-t-2 border-rose-200 pt-4"><i class="fas fa-lightbulb"></i> 영작 힌트 (첫 글자와 기호만 보여요!):</div>';
                 
-                if (currentIsCorrect !== isCorrect) {
-                    hintHTML += flushBuffer();
-                    currentIsCorrect = isCorrect;
-                }
-                buffer.push(cw);
-            });
-            
-            hintHTML += flushBuffer();
-            hintHTML += '</div>';
-            
+                const maskedSentence = q.en.split(' ').map(word => {
+                    let result = '';
+                    let firstCharFound = false;
+                    for (let i=0; i<word.length; i++) {
+                        let char = word[i];
+                        if (/[a-zA-Z0-9]/.test(char)) {
+                            if (!firstCharFound) {
+                                result += char;
+                                firstCharFound = true;
+                            } else {
+                                result += '_';
+                            }
+                        } else {
+                            result += char; // 기호는 그대로 유지
+                        }
+                    }
+                    return result;
+                }).join(' ');
+                
+                hintHTML += `<div class="text-lg font-mono tracking-widest bg-white p-3 rounded-xl border-2 border-indigo-200 text-indigo-800 break-words">${maskedSentence}</div>`;
+            }
+
             hintBox.innerHTML = hintHTML;
             area.appendChild(hintBox);
             document.getElementById('btn-hint').classList.add('hidden');
@@ -798,6 +876,7 @@
 
         function changeShopTab(tab) {
             currentShopTab = tab;
+            selectedShopItem = null; // 탭 변경 시 선택 초기화
             // 탭 스타일 리셋
             document.querySelectorAll('.shop-tab-btn').forEach(btn => {
                 btn.className = 'shop-tab-btn bg-slate-100 text-slate-500 hover:bg-slate-200 px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-slate-300';
@@ -805,6 +884,7 @@
             // 활성 탭 스타일
             document.getElementById('tab-' + tab).className = 'shop-tab-btn active-tab bg-indigo-500 text-white px-4 py-2 rounded-xl font-black whitespace-nowrap border-b-4 border-indigo-700';
             renderShop();
+            updateBuyButton();
         }
 
         function renderShop() {
@@ -822,18 +902,20 @@
             list.forEach(item => {
                 const itemValue = item.color || item.icon;
                 const isEquipped = myAvatar[activeKey] === itemValue;
+                const isPreviewing = previewAvatar[activeKey] === itemValue;
                 const isOwned = item.price === 0 || purchasedItems.includes(item.id);
                 
                 const btn = document.createElement('button');
-                btn.className = `game-btn rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm transition-colors ${isEquipped ? 'bg-emerald-400 text-emerald-900 border-emerald-600' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'}`;
+                // 미리보기 중인 아이템 강조
+                btn.className = `game-btn rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm transition-colors ${isPreviewing ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-slate-50 text-slate-700'}`;
                 
                 let iconHTML = item.color 
-                    ? `<div class="w-10 h-10 rounded-full mb-2 border-4 ${isEquipped ? 'border-white' : 'border-slate-800'}" style="background-color: ${item.color}"></div>`
+                    ? `<div class="w-10 h-10 rounded-full mb-2 border-4 ${isPreviewing ? 'border-white' : 'border-slate-800'}" style="background-color: ${item.color}"></div>`
                     : `<div class="text-4xl mb-2">${item.icon || '❌'}</div>`;
                 
                 let priceHTML = '';
                 if (isEquipped) {
-                    priceHTML = `<div class="text-emerald-900 font-black mt-1">착용중 ✔️</div>`;
+                    priceHTML = `<div class="text-emerald-600 font-black mt-1">착용중 ✔️</div>`;
                 } else if (isOwned) {
                     priceHTML = `<div class="text-indigo-500 font-black mt-1">보유중</div>`;
                 } else {
@@ -844,50 +926,134 @@
                                  <div class="truncate text-base mb-1 w-full text-center">${item.name}</div>
                                  ${priceHTML}`;
                                  
-                btn.onclick = () => buyItem(item, activeKey, itemValue);
+                btn.onclick = () => selectShopItem(item, activeKey, itemValue);
                 container.appendChild(btn);
             });
         }
 
-        function buyItem(item, key, value) {
-            const isOwned = item.price === 0 || purchasedItems.includes(item.id);
+        // 아이템 선택 시 미리보기에만 적용 (실제 구매/장착은 버튼 클릭 시)
+        function selectShopItem(item, key, value) {
+            previewAvatar[key] = value;
+            selectedShopItem = { item, key, value };
+            applyPreviewAvatar();
+            renderShop(); // UI 리렌더링하여 선택 테두리 갱신
+            updateBuyButton();
+        }
+
+        // 장식품 위치/크기 조절 함수
+        function moveItem(axis, amount) {
+            if (!selectedShopItem || selectedShopItem.key === 'color') return;
+            const key = selectedShopItem.key; // 'hat', 'face', 'acc'
             
-            if (isOwned) {
-                myAvatar[key] = value;
-                saveGameData();
-                applyAvatar();
+            if (axis === 'x') previewAvatar.offsets[key].x += amount;
+            if (axis === 'y') previewAvatar.offsets[key].y += amount;
+            if (axis === 's') {
+                previewAvatar.offsets[key].s = Math.max(0.5, previewAvatar.offsets[key].s + amount);
+            }
+            
+            applyPreviewAvatar();
+            updateBuyButton(); // 변경사항이 생겼으므로 저장 버튼 갱신
+        }
+
+        // 구매/장착 버튼 상태 업데이트
+        function updateBuyButton() {
+            const btn = document.getElementById('btn-buy-equip');
+            const posCtrl = document.getElementById('position-controls');
+
+            let activeKey = '';
+            if (currentShopTab === 'colors') activeKey = 'color';
+            else if (currentShopTab === 'hats') activeKey = 'hat';
+            else if (currentShopTab === 'faces') activeKey = 'face';
+            else if (currentShopTab === 'accs') activeKey = 'acc';
+
+            // 컬러탭이 아니고, 해당 카테고리에 아이템이 선택/장착되어 있으면 컨트롤 표시
+            if (activeKey !== 'color' && previewAvatar[activeKey] !== '') {
+                posCtrl.classList.remove('hidden');
             } else {
-                if (coins >= item.price) {
-                    coins -= item.price;
-                    purchasedItems.push(item.id);
-                    myAvatar[key] = value;
-                    saveGameData();
-                    updateCoinDisplay();
-                    applyAvatar();
+                posCtrl.classList.add('hidden');
+            }
+
+            // 기존 상태와 미리보기 상태 비교 (변경사항 여부 체크)
+            const isChanged = JSON.stringify(previewAvatar) !== JSON.stringify(myAvatar);
+
+            if (!selectedShopItem) {
+                if(isChanged) {
+                    btn.innerText = "💾 변경사항 저장하기";
+                    btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl mt-4";
+                    btn.onclick = savePreviewToAvatar;
                 } else {
-                    alert("코인이 부족해요! 문제를 더 풀어서 코인을 모아보세요.");
+                    btn.innerText = "아이템을 선택하세요";
+                    btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-black py-4 rounded-xl mt-4 cursor-not-allowed";
+                    btn.onclick = null;
                 }
+                return;
+            }
+
+            const { item, key, value } = selectedShopItem;
+            const isOwned = item.price === 0 || purchasedItems.includes(item.id);
+
+            if (!isOwned) {
+                btn.innerHTML = `🛒 구매 및 장착 (<i class="fas fa-coins text-amber-300"></i> ${item.price})`;
+                if (coins >= item.price) {
+                    btn.className = "game-btn w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black py-4 rounded-xl mt-4";
+                    btn.onclick = () => {
+                        coins -= item.price;
+                        purchasedItems.push(item.id);
+                        savePreviewToAvatar();
+                    };
+                } else {
+                    btn.className = "game-btn w-full bg-rose-400 text-white font-black py-4 rounded-xl mt-4 opacity-70 cursor-not-allowed";
+                    btn.onclick = () => alert("코인이 부족합니다! 문제를 더 풀어서 코인을 모아보세요.");
+                }
+            } else if (isChanged) {
+                btn.innerText = "💾 장착 및 위치 저장";
+                btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl mt-4";
+                btn.onclick = savePreviewToAvatar;
+            } else {
+                btn.innerText = "✔️ 현재 착용 중";
+                btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-black py-4 rounded-xl mt-4 cursor-not-allowed";
+                btn.onclick = null;
             }
         }
 
+        // 미리보기 내용을 실제 내 아바타로 확정 저장
+        function savePreviewToAvatar() {
+            myAvatar = JSON.parse(JSON.stringify(previewAvatar));
+            saveGameData();
+            updateCoinDisplay();
+            applyAvatar();
+            renderShop(); 
+            
+            const btn = document.getElementById('btn-buy-equip');
+            btn.innerText = "저장 완료! ✨";
+            btn.className = "game-btn w-full bg-emerald-400 text-emerald-900 font-black py-4 rounded-xl mt-4";
+            setTimeout(() => { updateBuyButton(); }, 1500);
+        }
+
+        // 아바타 렌더링을 위한 공통 HTML 생성 함수 (위치/크기 적용)
+        function getAvatarHTML(avatarObj) {
+            const off = avatarObj.offsets;
+            const hatHTML = avatarObj.hat ? `<div style="position:absolute; top:${off.hat.y}%; left:${off.hat.x}%; transform: scale(${off.hat.s}); z-index:20; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); pointer-events:none;">${avatarObj.hat}</div>` : '';
+            const faceHTML = avatarObj.face ? `<div style="position:absolute; top:${off.face.y}%; left:${off.face.x}%; transform: scale(${off.face.s}); z-index:15; pointer-events:none;">${avatarObj.face}</div>` : '';
+            const accHTML = avatarObj.acc ? `<div style="position:absolute; top:${off.acc.y}%; left:${off.acc.x}%; transform: scale(${off.acc.s}); z-index:10; pointer-events:none;">${avatarObj.acc}</div>` : '';
+            return hatHTML + faceHTML + accHTML;
+        }
+
+        function applyPreviewAvatar() {
+            const previewSlime = document.getElementById('preview-avatar');
+            if(previewSlime) previewSlime.style.backgroundColor = previewAvatar.color || '#a7f3d0';
+            const previewItem = document.getElementById('preview-item');
+            if(previewItem) previewItem.innerHTML = getAvatarHTML(previewAvatar);
+        }
+
         function applyAvatar() {
-            const slimes = document.querySelectorAll('.slime');
+            const slimes = document.querySelectorAll('.slime:not(#preview-avatar)');
             slimes.forEach(s => {
                 s.style.backgroundColor = myAvatar.color || '#a7f3d0';
             });
             
-            // 모자, 얼굴, 장식 위치 미세 조정
-            const hatHTML = myAvatar.hat ? `<div style="position:absolute; top:-30%; left:20%; font-size:1.8em; z-index:20;">${myAvatar.hat}</div>` : '';
-            const faceHTML = myAvatar.face ? `<div style="position:absolute; top:20%; left:15%; font-size:1.4em; z-index:15;">${myAvatar.face}</div>` : '';
-            const accHTML = myAvatar.acc ? `<div style="position:absolute; top:20%; left:-35%; font-size:1.4em; z-index:10;">${myAvatar.acc}</div>` : '';
-            
-            const combinedHTML = hatHTML + faceHTML + accHTML;
+            const combinedHTML = getAvatarHTML(myAvatar);
             document.getElementById('mini-item').innerHTML = combinedHTML;
-            document.getElementById('preview-item').innerHTML = combinedHTML;
-            
-            if (!document.getElementById('page-shop').classList.contains('hidden')) {
-                renderShop();
-            }
         }
     </script>
 </body>
