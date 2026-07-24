@@ -45,6 +45,7 @@
             box-shadow: 4px 4px 0px #1e293b;
         }
 
+        /* 드래그, 복사 방지 */
         .game-btn,
         .word-block,
         .select-none {
@@ -154,8 +155,8 @@
                 <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예: 20101" autocomplete="username">
             </div>
             <div class="mb-8">
-                <label for="input-name" class="block text-slate-700 font-bold mb-2">이름</label>
-                <input type="text" id="input-name" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예: 김오션" autocomplete="name">
+                <label for="input-name" class="block text-slate-700 font-bold mb-2">닉네임</label>
+                <input type="text" id="input-name" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예: 영어마스터" autocomplete="nickname">
             </div>
             
             <button onclick="login()" class="game-btn w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black text-xl py-4 rounded-xl">
@@ -340,10 +341,10 @@
 
     <script>
         // ---------------- [선생님을 위한 안내] ----------------
-        // 1. 구글 앱스 스크립트 '웹 앱 URL'을 아래 따옴표 안에 넣어주세요!
+        // 구글 앱스 스크립트 '웹 앱 URL'
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxLhH__yibJqs7QxehYF83xBcT_UTIQNBl5dOEnZRcjSqqcNcE59fnvhBPh-WizWEdT/exec";
 
-        // 2. 5~8단원 본문 데이터 (전체 문장 및 구 분리 완벽 적용)
+        // 본문 데이터 (5, 6, 7, 8단원 전체 완벽 수록)
         const db = {
             5: [
                 { en: "Welcome to my blog, “Happy Yujin!”", ko: "제 블로그인 ‘행복한 유진!’에 오신 것을 환영합니다.", phrases: ["Welcome to", "my blog,", "“Happy Yujin!”"] },
@@ -533,16 +534,16 @@
                 // 상점 입장 시 내 아바타 정보를 미리보기에 복사
                 previewAvatar = JSON.parse(JSON.stringify(myAvatar));
                 selectedShopItem = null;
-                renderShop();
-                applyPreviewAvatar();
-                updateBuyButton();
+                
+                // 상점 탭 초기화 (동기화 이슈 방지)
+                changeShopTab('colors');
             }
         }
 
         function login() {
             const id = document.getElementById('input-id').value.trim();
             const name = document.getElementById('input-name').value.trim();
-            if (!id || !name) { alert("학번과 이름을 입력해주세요!"); return; }
+            if (!id || !name) { alert("학번과 닉네임을 입력해주세요!"); return; }
             if (!/^\d+$/.test(id)) { alert("학번은 숫자만 입력해주세요!"); return; }
             
             studentData = { id, name };
@@ -617,7 +618,7 @@
                 if (currentMode === 2 || currentMode === 5) {
                     if (currentMode === 5) hintEn.classList.add('hidden');
                     
-                    // 영작/따라쓰기 모드 입력칸 생성 (이전 코드에서 누락된 부분 복구)
+                    // 영작/따라쓰기 모드 입력칸 생성
                     area.innerHTML = '<label for="answer-input" class="sr-only">영어 문장 정답</label><input type="text" id="answer-input" class="w-full border-4 border-slate-800 rounded-xl p-4 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="여기에 정답을 입력하세요" autocomplete="off" autocapitalize="off" spellcheck="false">';
                     
                     const answerInput = document.getElementById('answer-input');
@@ -853,6 +854,7 @@
                 <div class="text-2xl font-black text-indigo-700">모든 문장 학습 완료!</div>
                 <div class="text-amber-500 font-black text-2xl mt-4 bg-amber-50 px-6 py-3 rounded-full border-4 border-amber-200 shadow-sm">+50 코인 보너스!</div>
             </div>`;
+            area.classList.remove('hidden'); // 결과 화면 강제 표시 (1번 모드용)
             msg.className = 'hidden';
             
             addCoins(50); 
@@ -865,7 +867,7 @@
             if(!GAS_URL || GAS_URL.includes("여기에_선생님의")) return;
             const data = {
                 studentId: studentData.id,
-                studentName: studentData.name,
+                studentName: studentData.name, // 구글 시트 호환을 위해 키는 name 그대로 사용
                 unit: currentUnit,
                 mode: currentMode,
                 action: action
@@ -901,15 +903,16 @@
             { id: 'h8', name: '왕관 👑', icon: '👑', price: 300 },
         ];
 
+        // 얼굴 장식으로 변경 (안경, 가면 등)
         const shopFaces = [
             { id: 'f0', name: '기본 눈', icon: '', price: 0 },
-            { id: 'f1', name: '홍조 😳', icon: '😳', price: 10 },
-            { id: 'f2', name: '콧수염 🥸', icon: '🥸', price: 20 },
-            { id: 'f3', name: '선글라스 🕶️', icon: '🕶️', price: 30 },
-            { id: 'f4', name: '안경 👓', icon: '👓', price: 40 },
-            { id: 'f5', name: '하트눈 😍', icon: '😍', price: 50 },
-            { id: 'f6', name: '별눈 🤩', icon: '🤩', price: 100 },
-            { id: 'f7', name: '광대 🤡', icon: '🤡', price: 100 },
+            { id: 'f1', name: '안경 👓', icon: '👓', price: 10 },
+            { id: 'f2', name: '선글라스 🕶️', icon: '🕶️', price: 20 },
+            { id: 'f3', name: '수영 고글 🥽', icon: '🥽', price: 30 },
+            { id: 'f4', name: '반창고 🩹', icon: '🩹', price: 40 },
+            { id: 'f5', name: '입술 자국 💋', icon: '💋', price: 50 },
+            { id: 'f6', name: '가면 🎭', icon: '🎭', price: 100 },
+            { id: 'f7', name: '스노클 🤿', icon: '🤿', price: 100 },
         ];
 
         const shopAccs = [
@@ -951,7 +954,7 @@
             list.forEach(item => {
                 const itemValue = item.color || item.icon;
                 const isEquipped = myAvatar[activeKey] === itemValue;
-                const isPreviewing = previewAvatar[activeKey] === itemValue;
+                const isPreviewing = previewAvatar && previewAvatar[activeKey] === itemValue;
                 const isOwned = item.price === 0 || purchasedItems.includes(item.id);
                 
                 const btn = document.createElement('button');
