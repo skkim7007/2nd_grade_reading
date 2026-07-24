@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="중학교 영어 본문을 읽기, 받아쓰기, 문장 배열, 영작으로 익히는 학습 게임">
     <title>ENG MASTER - 본문 완전 정복</title>
     
     <!-- Tailwind CSS -->
@@ -59,6 +60,13 @@
             cursor: not-allowed;
             top: 0;
             box-shadow: 0px 6px 0px #0f172a;
+        }
+
+        .game-btn:focus-visible,
+        .word-block:focus-visible,
+        input:focus-visible {
+            outline: 4px solid #f59e0b;
+            outline-offset: 4px;
         }
 
         /* 슬라임 대기 애니메이션 (통통 튀기) */
@@ -200,33 +208,50 @@
             to { opacity: 0; transform: translateY(-20px); }
         }
 
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .game-box { border-width: 3px; box-shadow: 4px 4px 0 #0f172a; }
+            #page-login { margin-top: 1rem; }
+            #page-shop .game-box { height: auto; min-height: 0; }
+            #shop-content { max-height: 32rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
     <!-- 토스트 알림 컨테이너 -->
-    <div id="toast-container"></div>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- 1. 로그인 페이지 -->
-    <div id="page-login" class="w-full max-w-md flex flex-col items-center justify-center mt-10 pop-in">
+    <div id="page-login" role="main" aria-labelledby="login-title" class="w-full max-w-md flex flex-col items-center justify-center mt-10 pop-in">
         <div class="bg-white p-8 game-box w-full text-center relative overflow-hidden">
             <!-- 배경 장식 -->
             <div class="absolute -top-10 -left-10 text-6xl opacity-10">🎮</div>
             <div class="absolute -bottom-10 -right-10 text-6xl opacity-10">✨</div>
             
-            <h1 class="text-5xl font-game text-indigo-600 mb-2 drop-shadow-md">ENG MASTER</h1>
+            <h1 id="login-title" class="text-5xl font-game text-indigo-600 mb-2 drop-shadow-md">ENG MASTER</h1>
             <p class="text-center text-slate-500 font-bold mb-8">영어 본문 완전 정복!</p>
             
             <div class="mb-4 text-left">
                 <label for="input-id" class="block text-slate-700 font-bold mb-2 ml-1">학번</label>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 20101" autocomplete="off">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 20101" autocomplete="off">
             </div>
             <div class="mb-8 text-left">
                 <label for="input-name" class="block text-slate-700 font-bold mb-2 ml-1">닉네임</label>
-                <input type="text" id="input-name" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 닉네임을 입력하세요" autocomplete="off">
+                <input type="text" id="input-name" maxlength="20" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 닉네임을 입력하세요" autocomplete="nickname">
             </div>
             
-            <button onclick="login()" class="game-btn w-full bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-game text-2xl py-4 rounded-xl flex justify-center items-center gap-2">
+            <button type="button" onclick="login()" class="game-btn w-full bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-game text-2xl py-4 rounded-xl flex justify-center items-center gap-2">
                 게임 시작하기 <i class="fas fa-play"></i>
             </button>
         </div>
@@ -431,7 +456,7 @@
         let isAudioInitialized = false;
 
         function initAudio() {
-            if (isAudioInitialized) return;
+            if (isAudioInitialized || typeof Tone === 'undefined') return;
             synth = new Tone.PolySynth(Tone.Synth, {
                 oscillator: { type: "sine" },
                 envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 }
@@ -444,7 +469,7 @@
         document.body.addEventListener('pointerdown', initAudio, { once: true });
 
         function playSound(type) {
-            if (!synth) return;
+            if (!synth || typeof Tone === 'undefined') return;
             if (Tone.context.state !== 'running') Tone.context.resume();
             
             const now = Tone.now();
@@ -470,7 +495,7 @@
             const toast = document.createElement('div');
             toast.className = 'toast-msg';
             if(isError) toast.style.backgroundColor = '#e11d48'; // 에러는 빨간색
-            toast.innerHTML = (isError ? '⚠️ ' : '💬 ') + message;
+            toast.textContent = (isError ? '⚠️ ' : '💬 ') + message;
             
             container.appendChild(toast);
             setTimeout(() => {
@@ -598,6 +623,8 @@
         let currentQuestionIndex = 0;
         let arrangedBlocks = [];
         let failedAttempt = false;
+        let isFinishing = false;
+        let navigationLocked = false;
 
         // 게임화 데이터 (accs를 배열로 관리하여 여러개 장착 지원)
         let coins = 0;
@@ -696,6 +723,10 @@
                 showToast("학번은 숫자만 입력해주세요!", true); 
                 return; 
             }
+            if (id.length > 12 || name.length > 20) {
+                showToast("학번은 12자, 닉네임은 20자 이내로 입력해주세요!", true);
+                return;
+            }
             
             studentData = { id, name };
             document.getElementById('user-info-display').innerText = `${id} ${name}`;
@@ -714,6 +745,8 @@
             currentMode = mode;
             currentQuestions = db[currentUnit] || [];
             currentQuestionIndex = 0;
+            isFinishing = false;
+            navigationLocked = false;
             
             if (currentQuestions.length === 0) {
                 showToast("해당 단원의 데이터가 없습니다.", true); return;
@@ -727,9 +760,10 @@
         }
 
         function updateProgress() {
-            const pct = (currentQuestionIndex / currentQuestions.length) * 100;
+            const currentNumber = Math.min(currentQuestionIndex + 1, currentQuestions.length);
+            const pct = currentQuestions.length ? (currentNumber / currentQuestions.length) * 100 : 0;
             document.getElementById('progress-bar').style.width = pct + '%';
-            document.getElementById('progress-text').innerText = `${currentQuestionIndex} / ${currentQuestions.length}`;
+            document.getElementById('progress-text').innerText = `${currentNumber} / ${currentQuestions.length}`;
             document.getElementById('progress-track').setAttribute('aria-valuenow', String(Math.round(pct)));
         }
 
@@ -866,12 +900,14 @@
                 
                 // 미니 파티클 폭죽 효과
                 const rect = document.getElementById('btn-check').getBoundingClientRect();
-                confetti({
-                    particleCount: 50,
-                    spread: 60,
-                    origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: rect.top/window.innerHeight },
-                    colors: ['#34d399', '#fcd34d', '#818cf8']
-                });
+                if (typeof confetti === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: rect.top/window.innerHeight },
+                        colors: ['#34d399', '#fcd34d', '#818cf8']
+                    });
+                }
 
                 showMessage(true, "정답입니다! 완벽해요! ✨");
                 addCoins(10); 
@@ -980,11 +1016,14 @@
         }
 
         function nextQuestion() {
+            if (navigationLocked || isFinishing) return;
+            navigationLocked = true;
             currentQuestionIndex++;
             if (currentQuestionIndex >= currentQuestions.length) {
                 finishMode();
             } else {
                 renderQuestion();
+                setTimeout(() => { navigationLocked = false; }, 250);
             }
         }
 
@@ -1002,12 +1041,15 @@
         }
 
         function finishMode() {
+            if (isFinishing) return;
+            isFinishing = true;
             playSound('tada');
             
             // 화면 전체 폭죽 축하 효과
             const duration = 3000;
             const end = Date.now() + duration;
             (function frame() {
+                if (typeof confetti !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
                 confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#fbbf24', '#60a5fa', '#34d399'] });
                 confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#fbbf24', '#60a5fa', '#34d399'] });
                 if (Date.now() < end) requestAnimationFrame(frame);
@@ -1035,7 +1077,11 @@
             addCoins(50); 
             sendToGoogleSheets("모드 완료");
             
-            setTimeout(() => { showPage('page-mode'); }, 4000);
+            setTimeout(() => {
+                isFinishing = false;
+                navigationLocked = false;
+                showPage('page-mode');
+            }, 4000);
         }
 
         function sendToGoogleSheets(action) {
@@ -1045,7 +1091,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(data)
-            }).catch(e => console.log("Google Sheets Error:", e));
+            }).catch(() => showToast("학습 기록 전송에 실패했지만, 기기에는 저장되었습니다.", true));
         }
 
         // 상점 데이터 (얼굴 가리지 않는 아이템으로 교체)
@@ -1325,9 +1371,9 @@
             document.getElementById('mini-item').innerHTML = combinedHTML;
         }
 
-        document.getElementById('input-name').addEventListener('keydown', event => {
+        ['input-id', 'input-name'].forEach(inputId => document.getElementById(inputId).addEventListener('keydown', event => {
             if (event.key === 'Enter') login();
-        });
+        }));
     </script>
 </body>
 </html>
