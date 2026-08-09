@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4f46e5">
-    <meta name="description" content="중학교 영어 본문을 읽기, 받아쓰기, 문장 배열, 영작으로 익히는 학습 게임">
     <title>ENG MASTER - 본문 완전 정복</title>
     
     <!-- Tailwind CSS -->
@@ -60,13 +59,6 @@
             cursor: not-allowed;
             top: 0;
             box-shadow: 0px 6px 0px #0f172a;
-        }
-
-        .game-btn:focus-visible,
-        .word-block:focus-visible,
-        input:focus-visible {
-            outline: 4px solid #f59e0b;
-            outline-offset: 4px;
         }
 
         /* 슬라임 대기 애니메이션 (통통 튀기) */
@@ -208,50 +200,33 @@
             to { opacity: 0; transform: translateY(-20px); }
         }
 
-        @media (max-width: 640px) {
-            body { padding: 12px; }
-            .game-box { border-width: 3px; box-shadow: 4px 4px 0 #0f172a; }
-            #page-login { margin-top: 1rem; }
-            #page-shop .game-box { height: auto; min-height: 0; }
-            #shop-content { max-height: 32rem; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                scroll-behavior: auto !important;
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
     <!-- 토스트 알림 컨테이너 -->
-    <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="toast-container"></div>
 
     <!-- 1. 로그인 페이지 -->
-    <div id="page-login" role="main" aria-labelledby="login-title" class="w-full max-w-md flex flex-col items-center justify-center mt-10 pop-in">
+    <div id="page-login" class="w-full max-w-md flex flex-col items-center justify-center mt-10 pop-in">
         <div class="bg-white p-8 game-box w-full text-center relative overflow-hidden">
             <!-- 배경 장식 -->
             <div class="absolute -top-10 -left-10 text-6xl opacity-10">🎮</div>
             <div class="absolute -bottom-10 -right-10 text-6xl opacity-10">✨</div>
             
-            <h1 id="login-title" class="text-5xl font-game text-indigo-600 mb-2 drop-shadow-md">ENG MASTER</h1>
+            <h1 class="text-5xl font-game text-indigo-600 mb-2 drop-shadow-md">ENG MASTER</h1>
             <p class="text-center text-slate-500 font-bold mb-8">영어 본문 완전 정복!</p>
             
             <div class="mb-4 text-left">
                 <label for="input-id" class="block text-slate-700 font-bold mb-2 ml-1">학번</label>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 20101" autocomplete="off">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-id" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 20101" autocomplete="off">
             </div>
             <div class="mb-8 text-left">
                 <label for="input-name" class="block text-slate-700 font-bold mb-2 ml-1">닉네임</label>
-                <input type="text" id="input-name" maxlength="20" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 닉네임을 입력하세요" autocomplete="nickname">
+                <input type="text" id="input-name" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="예) 닉네임을 입력하세요" autocomplete="off">
             </div>
             
-            <button type="button" onclick="login()" class="game-btn w-full bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-game text-2xl py-4 rounded-xl flex justify-center items-center gap-2">
+            <button onclick="login()" class="game-btn w-full bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-game text-2xl py-4 rounded-xl flex justify-center items-center gap-2">
                 게임 시작하기 <i class="fas fa-play"></i>
             </button>
         </div>
@@ -418,8 +393,8 @@
                         <button onclick="moveItem('s', 0.1)" class="game-btn bg-white rounded-xl p-2 text-slate-700 text-sm font-bold"><i class="fas fa-search-plus"></i> 크게</button>
                     </div>
                     
-                    <!-- 현재 선택된 장식 삭제 버튼 (다중 장착용) -->
-                    <button id="btn-remove-acc" onclick="removeSelectedAcc()" class="hidden game-btn w-full bg-rose-100 hover:bg-rose-200 border-rose-300 text-rose-700 font-bold py-2 rounded-xl text-sm">
+                    <!-- 현재 선택된 장식/머리/얼굴 삭제 버튼 -->
+                    <button id="btn-remove-acc" onclick="removeSelectedItem()" class="hidden game-btn w-full bg-rose-100 hover:bg-rose-200 border-rose-300 text-rose-700 font-bold py-2 rounded-xl text-sm">
                         <i class="fas fa-trash-alt"></i> 이 장식 빼기
                     </button>
                 </div>
@@ -456,20 +431,19 @@
         let isAudioInitialized = false;
 
         function initAudio() {
-            if (isAudioInitialized || typeof Tone === 'undefined') return;
+            if (isAudioInitialized) return;
             synth = new Tone.PolySynth(Tone.Synth, {
                 oscillator: { type: "sine" },
                 envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 }
             }).toDestination();
-            synth.volume.value = -10; // 볼륨 조절
+            synth.volume.value = -10;
             isAudioInitialized = true;
         }
 
-        // 화면 터치 시 오디오 컨텍스트 초기화 (브라우저 정책 우회)
         document.body.addEventListener('pointerdown', initAudio, { once: true });
 
         function playSound(type) {
-            if (!synth || typeof Tone === 'undefined') return;
+            if (!synth) return;
             if (Tone.context.state !== 'running') Tone.context.resume();
             
             const now = Tone.now();
@@ -494,8 +468,8 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'toast-msg';
-            if(isError) toast.style.backgroundColor = '#e11d48'; // 에러는 빨간색
-            toast.textContent = (isError ? '⚠️ ' : '💬 ') + message;
+            if(isError) toast.style.backgroundColor = '#e11d48'; 
+            toast.innerHTML = (isError ? '⚠️ ' : '💬 ') + message;
             
             container.appendChild(toast);
             setTimeout(() => {
@@ -503,7 +477,7 @@
             }, 3000);
         }
 
-        // 본문 데이터 (5, 6, 7, 8단원 전체 완벽 수록)
+        // 본문 데이터 (5, 6, 7, 8단원 전체 수록)
         const db = {
             5: [
                 { en: "Welcome to my blog, “Happy Yujin!”", ko: "제 블로그인 ‘행복한 유진!’에 오신 것을 환영합니다.", phrases: ["Welcome to", "my blog,", "“Happy Yujin!”"] },
@@ -602,7 +576,7 @@
                 { en: "Emily: Oh, it’s $25 for one hour. Look, the other tours are all 3 hours.", ko: "Emily: 오, 그건 한 시간에 25달러야. 봐, 다른 투어들은 모두 3시간짜리인걸.", phrases: ["Emily:", "Oh, it’s $25", "for one hour.", "Look,", "the other tours", "are all 3 hours."] },
                 { en: "Dad: Right. We need to find out the price for the same amount of time.", ko: "아빠: 맞아. 우리는 같은 시간에 대한 가격을 알아내야 해.", phrases: ["Dad:", "Right.", "We need to", "find out the price", "for the same amount", "of time."] },
                 { en: "Nick: Okay, but how can we do that?", ko: "Nick: 알겠어요, 그런데 어떻게 알아낼 수 있어요?", phrases: ["Nick:", "Okay,", "but how can we", "do that?"] },
-                { en: "Emily: Let’s start with Smile Tour. If we take a 3-hour tour, it will cost $75.", ko: "Emily: Smile Tour부터 시작해 봐요. 우리가 3시간짜리 투어를 한다면, 75달러 비용이 들 거예요.", phrases: ["Emily:", "Let’s start", "with Smile Tour.", "If we take", "a 3-hour tour,", "it will cost", "$75."] },
+                { en: "Emily: Let’s start with Smile Tour. If we take a 3-hour tour, it will cost $75.", ko: "Emily: Smile Tour부터 시작해 봐요. 우리가 3시간짜리 투어를 단다면, 75달러 비용이 들 거예요.", phrases: ["Emily:", "Let’s start", "with Smile Tour.", "If we take", "a 3-hour tour,", "it will cost", "$75."] },
                 { en: "Nick: Star Tour is $60 for 3 hours, and Top Tour is $110. Wow, now Star Tour is the cheapest!", ko: "Nick: Star Tour는 3시간에 60달러이고, Top Tour는 110달러네요. 와, 이제 Star Tour가 가장 저렴하네요!", phrases: ["Nick:", "Star Tour is $60", "for 3 hours,", "and Top Tour is $110.", "Wow,", "now Star Tour", "is the cheapest!"] },
                 { en: "Mom: Right, but we have one more thing to check.", ko: "엄마: 맞아, 하지만 우리가 확인해야 할 것이 한 가지 더 있지.", phrases: ["Mom:", "Right,", "but we have", "one more thing", "to check."] },
                 { en: "Nick: What is it, Mom?", ko: "Nick: 그게 뭔데요, 엄마?", phrases: ["Nick:", "What is it,", "Mom?"] },
@@ -623,20 +597,17 @@
         let currentQuestionIndex = 0;
         let arrangedBlocks = [];
         let failedAttempt = false;
-        let isFinishing = false;
-        let navigationLocked = false;
 
-        // 게임화 데이터 (accs를 배열로 관리하여 여러개 장착 지원)
+        // 모든 아이템 부위(모자, 얼굴, 장식) 다중 장착 지원!
         let coins = 0;
         let myAvatar = { 
-            color: '#a7f3d0', hat: '', face: '', accs: [],
-            offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4} }
+            color: '#a7f3d0', hats: [], faces: [], accs: []
         };
         let purchasedItems = []; 
         let currentShopTab = 'colors';
         
         let previewAvatar = null;
-        let selectedShopItem = null; // { type, index(if acc), item }
+        let selectedShopItem = null; // { type, index(if multiple), item }
         
         function loadSaveData(id) {
             const saved = localStorage.getItem('eng_master_' + id);
@@ -652,27 +623,29 @@
                 coins = Number.isFinite(parsed.coins) && parsed.coins >= 0 ? parsed.coins : 0;
                 myAvatar = parsed.avatar && typeof parsed.avatar === 'object'
                     ? parsed.avatar
-                    : { color: '#a7f3d0', hat: '', face: '', accs: [] };
+                    : { color: '#a7f3d0', hats: [], faces: [], accs: [] };
                 purchasedItems = Array.isArray(parsed.purchased) ? parsed.purchased : [];
                 
-                // 구버전 마이그레이션 (과거 버전 호환)
-                if(myAvatar.item !== undefined) { myAvatar.hat = myAvatar.item; delete myAvatar.item; }
+                // 마이그레이션 (옛날 데이터 구조 -> 다중 장착 구조)
                 if(!myAvatar.accs) myAvatar.accs = [];
-                // 만약 과거에 단일 acc가 문자열로 있었다면 배열로 변환
-                if(myAvatar.acc && typeof myAvatar.acc === 'string' && myAvatar.acc !== '') {
-                    myAvatar.accs.push({ icon: myAvatar.acc, x:-35, y:20, s:1.4 });
-                    myAvatar.acc = '';
+                if(!myAvatar.hats) {
+                    myAvatar.hats = [];
+                    if(myAvatar.hat && myAvatar.hat !== '') {
+                        myAvatar.hats.push({ icon: myAvatar.hat, x: myAvatar.offsets?.hat?.x || 20, y: myAvatar.offsets?.hat?.y || -30, s: myAvatar.offsets?.hat?.s || 1.8 });
+                    }
+                    delete myAvatar.hat;
                 }
-                
-                if(!myAvatar.offsets) {
-                    myAvatar.offsets = { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4} };
+                if(!myAvatar.faces) {
+                    myAvatar.faces = [];
+                    if(myAvatar.face && myAvatar.face !== '') {
+                        myAvatar.faces.push({ icon: myAvatar.face, x: myAvatar.offsets?.face?.x || 15, y: myAvatar.offsets?.face?.y || 20, s: myAvatar.offsets?.face?.s || 1.4 });
+                    }
+                    delete myAvatar.face;
                 }
+                delete myAvatar.offsets;
             } else {
                 coins = 0;
-                myAvatar = { 
-                    color: '#a7f3d0', hat: '', face: '', accs: [],
-                    offsets: { hat: {x:20, y:-30, s:1.8}, face: {x:15, y:20, s:1.4} }
-                };
+                myAvatar = { color: '#a7f3d0', hats: [], faces: [], accs: [] };
                 purchasedItems = [];
             }
             updateCoinDisplay();
@@ -688,10 +661,24 @@
             }));
         }
 
-        // 클릭음 글로벌 바인딩 (모든 버튼에 적용)
+        // 클릭 효과음 글로벌 적용
         document.addEventListener('mousedown', (e) => {
             if (e.target.closest('.game-btn') || e.target.closest('.word-block') || e.target.closest('.shop-tab-btn')) {
                 playSound('click');
+            }
+        });
+
+        // 엔터키 글로벌 적용 (빠른 학습 진행)
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') {
+                const pageLearn = document.getElementById('page-learn');
+                if(!pageLearn.classList.contains('hidden')) {
+                    const btnNext = document.getElementById('btn-next');
+                    if(!btnNext.classList.contains('hidden')) {
+                        btnNext.click();
+                        e.preventDefault();
+                    }
+                }
             }
         });
 
@@ -706,7 +693,6 @@
             if (pageId === 'page-shop') {
                 document.getElementById('shop-coin-display').innerText = coins;
                 previewAvatar = JSON.parse(JSON.stringify(myAvatar));
-                if(!previewAvatar.accs) previewAvatar.accs = [];
                 selectedShopItem = null;
                 changeShopTab('colors');
             }
@@ -715,18 +701,8 @@
         function login() {
             const id = document.getElementById('input-id').value.trim();
             const name = document.getElementById('input-name').value.trim();
-            if (!id || !name) { 
-                showToast("학번과 닉네임을 모두 입력해주세요!", true); 
-                return; 
-            }
-            if (!/^\d+$/.test(id)) { 
-                showToast("학번은 숫자만 입력해주세요!", true); 
-                return; 
-            }
-            if (id.length > 12 || name.length > 20) {
-                showToast("학번은 12자, 닉네임은 20자 이내로 입력해주세요!", true);
-                return;
-            }
+            if (!id || !name) { showToast("학번과 닉네임을 모두 입력해주세요!", true); return; }
+            if (!/^\d+$/.test(id)) { showToast("학번은 숫자만 입력해주세요!", true); return; }
             
             studentData = { id, name };
             document.getElementById('user-info-display').innerText = `${id} ${name}`;
@@ -745,8 +721,6 @@
             currentMode = mode;
             currentQuestions = db[currentUnit] || [];
             currentQuestionIndex = 0;
-            isFinishing = false;
-            navigationLocked = false;
             
             if (currentQuestions.length === 0) {
                 showToast("해당 단원의 데이터가 없습니다.", true); return;
@@ -760,16 +734,24 @@
         }
 
         function updateProgress() {
-            const currentNumber = Math.min(currentQuestionIndex + 1, currentQuestions.length);
-            const pct = currentQuestions.length ? (currentNumber / currentQuestions.length) * 100 : 0;
+            const pct = (currentQuestionIndex / currentQuestions.length) * 100;
             document.getElementById('progress-bar').style.width = pct + '%';
-            document.getElementById('progress-text').innerText = `${currentNumber} / ${currentQuestions.length}`;
+            document.getElementById('progress-text').innerText = `${currentQuestionIndex} / ${currentQuestions.length}`;
             document.getElementById('progress-track').setAttribute('aria-valuenow', String(Math.round(pct)));
         }
 
         function updateCoinDisplay() {
             document.getElementById('coin-display').innerText = coins;
             document.getElementById('shop-coin-display').innerText = coins;
+        }
+
+        // 배열 무작위 섞기 기능! (절대 누락 금지)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
         }
 
         function renderQuestion() {
@@ -813,13 +795,18 @@
                     area.innerHTML = '<label for="answer-input" class="sr-only">영어 문장 정답</label><input type="text" id="answer-input" class="w-full border-4 border-slate-800 rounded-xl p-4 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors shadow-inner" placeholder="여기에 정답을 입력하세요" autocomplete="off" autocapitalize="off" spellcheck="false">';
                     
                     const answerInput = document.getElementById('answer-input');
-                    // 복사 붙여넣기 차단
+                    // 복사 방지
                     answerInput.onpaste = function(e) { e.preventDefault(); showToast("붙여넣기는 안 돼요! 직접 타자를 쳐보세요 😉", true); };
                     answerInput.oncopy = function(e) { e.preventDefault(); };
+                    // 엔터 누를 시
                     answerInput.onkeydown = function(e) {
                         if (e.key === 'Enter') {
                             e.preventDefault();
-                            checkAnswer();
+                            if (!document.getElementById('btn-next').classList.contains('hidden')) {
+                                nextQuestion();
+                            } else {
+                                checkAnswer();
+                            }
                         }
                     };
                     answerInput.focus();
@@ -867,17 +854,9 @@
             }
         }
 
-        // 아주 중요한 무작위 섞기 함수 (버그 픽스)
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
+        // 연속된 공백 제거 추가 (연속 띄어쓰기 오답 방지)
         function cleanString(str) {
-            return str.replace(/[.,!?“”"'‘’]/g, '').toLowerCase().trim();
+            return str.replace(/[.,!?“”"'‘’]/g, '').replace(/\s+/g, ' ').toLowerCase().trim();
         }
         function escapeHTML(value) {
             return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -892,22 +871,19 @@
                 if(cleanString(input) === cleanString(q.en)) isCorrect = true;
             } else if (currentMode === 3 || currentMode === 4) {
                 const correctArr = (currentMode === 3 && q.phrases ? q.phrases : q.en.split(' ')).map(cleanString);
-                if(arrangedBlocks.map(cleanString).join('') === correctArr.join('')) isCorrect = true;
+                if(arrangedBlocks.map(cleanString).join(' ') === correctArr.join(' ')) isCorrect = true;
             }
 
             if (isCorrect) {
                 playSound('correct');
                 
-                // 미니 파티클 폭죽 효과
                 const rect = document.getElementById('btn-check').getBoundingClientRect();
-                if (typeof confetti === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                    confetti({
-                        particleCount: 50,
-                        spread: 60,
-                        origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: rect.top/window.innerHeight },
-                        colors: ['#34d399', '#fcd34d', '#818cf8']
-                    });
-                }
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: rect.top/window.innerHeight },
+                    colors: ['#34d399', '#fcd34d', '#818cf8']
+                });
 
                 showMessage(true, "정답입니다! 완벽해요! ✨");
                 addCoins(10); 
@@ -918,7 +894,6 @@
                 document.getElementById('hint-area').innerHTML = ''; 
             } else {
                 playSound('wrong');
-                // 오답 시 흔들기 효과
                 const qBox = document.getElementById('question-container');
                 qBox.classList.remove('shake');
                 void qBox.offsetWidth; // reflow
@@ -944,7 +919,7 @@
             
             if (currentMode === 2 || currentMode === 5) {
                 rawInput = document.getElementById('answer-input').value.trim();
-                inputWords = rawInput ? rawInput.split(/\s+/) : [];
+                inputWords = rawInput ? rawInput.replace(/\s+/g, ' ').split(' ') : [];
             } else if (currentMode === 3 || currentMode === 4) {
                 inputWords = arrangedBlocks;
             }
@@ -1016,14 +991,11 @@
         }
 
         function nextQuestion() {
-            if (navigationLocked || isFinishing) return;
-            navigationLocked = true;
             currentQuestionIndex++;
             if (currentQuestionIndex >= currentQuestions.length) {
                 finishMode();
             } else {
                 renderQuestion();
-                setTimeout(() => { navigationLocked = false; }, 250);
             }
         }
 
@@ -1041,15 +1013,11 @@
         }
 
         function finishMode() {
-            if (isFinishing) return;
-            isFinishing = true;
             playSound('tada');
             
-            // 화면 전체 폭죽 축하 효과
             const duration = 3000;
             const end = Date.now() + duration;
             (function frame() {
-                if (typeof confetti !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
                 confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#fbbf24', '#60a5fa', '#34d399'] });
                 confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#fbbf24', '#60a5fa', '#34d399'] });
                 if (Date.now() < end) requestAnimationFrame(frame);
@@ -1077,11 +1045,7 @@
             addCoins(50); 
             sendToGoogleSheets("모드 완료");
             
-            setTimeout(() => {
-                isFinishing = false;
-                navigationLocked = false;
-                showPage('page-mode');
-            }, 4000);
+            setTimeout(() => { showPage('page-mode'); }, 4000);
         }
 
         function sendToGoogleSheets(action) {
@@ -1091,10 +1055,19 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(data)
-            }).catch(() => showToast("학습 기록 전송에 실패했지만, 기기에는 저장되었습니다.", true));
+            }).catch(e => console.log("Google Sheets Error:", e));
         }
 
-        // 상점 데이터 (얼굴 가리지 않는 아이템으로 교체)
+        // 입력 폼 엔터키 작동
+        document.getElementById('input-id').addEventListener('keydown', e => {
+            if(e.key === 'Enter') { e.preventDefault(); document.getElementById('input-name').focus(); }
+        });
+        document.getElementById('input-name').addEventListener('keydown', event => {
+            if (event.key === 'Enter') login();
+        });
+
+
+        // ------------------ [상점 및 다중 아바타 시스템] ------------------
         const shopColors = [
             { id: 'c1', name: '기본 멜론', color: '#a7f3d0', price: 0 },
             { id: 'c2', name: '딸기 우유', color: '#fbcfe8', price: 10 },
@@ -1107,7 +1080,7 @@
         ];
 
         const shopHats = [
-            { id: 'h0', name: '벗기', icon: '', price: 0 },
+            { id: 'h0', name: '머리 치우기', icon: '', price: 0 },
             { id: 'h1', name: '새싹', icon: '🌱', price: 10 },
             { id: 'h2', name: '리본', icon: '🎀', price: 20 },
             { id: 'h3', name: '야구모자', icon: '🧢', price: 30 },
@@ -1119,9 +1092,9 @@
         ];
 
         const shopFaces = [
-            { id: 'f0', name: '기본 얼굴', icon: '', price: 0 },
-            { id: 'f1', name: '홍조', icon: '😳', price: 10 },
-            { id: 'f2', name: '메롱', icon: '😛', price: 20 },
+            { id: 'f0', name: '얼굴 치우기', icon: '', price: 0 },
+            { id: 'f1', name: '볼터치', icon: '<div class="flex gap-4 mt-1 opacity-80"><div class="w-4 h-2.5 bg-rose-400 rounded-full"></div><div class="w-4 h-2.5 bg-rose-400 rounded-full"></div></div>', price: 10 },
+            { id: 'f2', name: '혀 메롱', icon: '👅', price: 20 },
             { id: 'f3', name: '반창고', icon: '🩹', price: 30 },
             { id: 'f4', name: '뿔테안경', icon: '👓', price: 40 },
             { id: 'f5', name: '선글라스', icon: '🕶️', price: 50 },
@@ -1130,6 +1103,7 @@
         ];
 
         const shopAccs = [
+            { id: 'a0', name: '장식 치우기', icon: '', price: 0 },
             { id: 'a1', name: '반짝이', icon: '✨', price: 10 },
             { id: 'a2', name: '음표', icon: '🎵', price: 20 },
             { id: 'a3', name: '하트', icon: '💖', price: 30 },
@@ -1159,8 +1133,8 @@
             let activeKey = '';
 
             if (currentShopTab === 'colors') { list = shopColors; activeKey = 'color'; }
-            else if (currentShopTab === 'hats') { list = shopHats; activeKey = 'hat'; }
-            else if (currentShopTab === 'faces') { list = shopFaces; activeKey = 'face'; }
+            else if (currentShopTab === 'hats') { list = shopHats; activeKey = 'hats'; }
+            else if (currentShopTab === 'faces') { list = shopFaces; activeKey = 'faces'; }
             else if (currentShopTab === 'accs') { list = shopAccs; activeKey = 'accs'; }
 
             list.forEach(item => {
@@ -1168,14 +1142,16 @@
                 let isEquipped = false;
                 let isPreviewing = false;
 
-                if (activeKey === 'accs') {
-                    // 다중 장착 (배열 내 존재 여부 파악)
-                    isEquipped = myAvatar.accs.some(a => a.icon === itemValue);
-                    // 현재 편집중인(선택된) 파츠인지 확인
-                    isPreviewing = selectedShopItem && selectedShopItem.type === 'accs' && selectedShopItem.item.icon === itemValue;
+                if (activeKey !== 'color') {
+                    if (item.price === 0) {
+                        isEquipped = myAvatar[activeKey].length === 0;
+                    } else {
+                        isEquipped = myAvatar[activeKey].some(a => a.icon === itemValue);
+                        isPreviewing = selectedShopItem && selectedShopItem.type === activeKey && selectedShopItem.item.icon === itemValue;
+                    }
                 } else {
-                    isEquipped = myAvatar[activeKey] === itemValue;
-                    isPreviewing = selectedShopItem && selectedShopItem.type === activeKey && selectedShopItem.item.icon === itemValue;
+                    isEquipped = myAvatar.color === itemValue;
+                    isPreviewing = selectedShopItem && selectedShopItem.type === 'color' && selectedShopItem.item.icon === itemValue;
                 }
 
                 const isOwned = item.price === 0 || purchasedItems.includes(item.id);
@@ -1188,18 +1164,18 @@
                     : `<div class="text-4xl mb-3 drop-shadow-md">${item.icon || '❌'}</div>`;
                 
                 let priceHTML = '';
-                if (activeKey === 'accs') {
-                    // 장식 탭은 샀으면 계속 무제한으로 달 수 있음
-                    priceHTML = isOwned ? `<div class="text-indigo-500 font-game text-base mt-1">보유중 (터치하여 추가)</div>` 
-                                        : `<div class="text-amber-500 font-game text-base mt-1">${item.price} 코인</div>`;
-                } else {
-                    if (isEquipped) {
-                        priceHTML = `<div class="text-emerald-600 font-game text-base mt-1">착용중 ✔️</div>`;
+                if (activeKey !== 'color') {
+                    if (item.price === 0) {
+                        priceHTML = `<div class="text-slate-400 font-game text-base mt-1">싹 지우기</div>`;
                     } else if (isOwned) {
-                        priceHTML = `<div class="text-indigo-500 font-game text-base mt-1">보유중</div>`;
+                        priceHTML = `<div class="text-indigo-500 font-game text-base mt-1">보유중 (추가)</div>`;
                     } else {
                         priceHTML = `<div class="text-amber-500 font-game text-base mt-1">${item.price} 코인</div>`;
                     }
+                } else {
+                    if (isEquipped) priceHTML = `<div class="text-emerald-600 font-game text-base mt-1">착용중 ✔️</div>`;
+                    else if (isOwned) priceHTML = `<div class="text-indigo-500 font-game text-base mt-1">보유중</div>`;
+                    else priceHTML = `<div class="text-amber-500 font-game text-base mt-1">${item.price} 코인</div>`;
                 }
 
                 btn.innerHTML = `${iconHTML}<div class="truncate text-lg mb-1 w-full text-center font-game">${item.name}</div>${priceHTML}`;
@@ -1209,33 +1185,37 @@
         }
 
         function selectShopItem(item, key, value) {
-            if (key === 'accs') {
-                // 다중 장착 탭: 무조건 새 아이템으로 배열에 추가하고 그것을 조작 대상으로 삼음
-                const newAcc = { icon: value, x: -30 + Math.random()*60, y: -30 + Math.random()*60, s: 1.5 };
-                previewAvatar.accs.push(newAcc);
-                selectedShopItem = { type: 'accs', index: previewAvatar.accs.length - 1, item: item };
+            if (key !== 'color') {
+                if (value === '') {
+                    // 모두 지우기 (해당 탭의 다중 배열 초기화)
+                    previewAvatar[key] = [];
+                    selectedShopItem = null;
+                } else {
+                    // 다중 장착 (새 요소 추가)
+                    let defaultX = 0, defaultY = 0, defaultS = 1.5;
+                    if(key === 'hats') { defaultX = 20; defaultY = -30; defaultS = 1.8; }
+                    if(key === 'faces') { defaultX = 15; defaultY = 20; defaultS = 1.4; }
+                    if(key === 'accs') { defaultX = -30 + Math.random()*60; defaultY = -30 + Math.random()*60; defaultS = 1.5; }
+
+                    const newItem = { icon: value, x: defaultX, y: defaultY, s: defaultS };
+                    previewAvatar[key].push(newItem);
+                    selectedShopItem = { type: key, index: previewAvatar[key].length - 1, item: item };
+                }
             } else {
-                previewAvatar[key] = value;
-                selectedShopItem = { type: key, item: item };
+                previewAvatar.color = value;
+                selectedShopItem = { type: 'color', item: item };
             }
             applyPreviewAvatar();
             renderShop();
             updateBuyButton();
         }
 
-        // 장식품 위치/크기 조절 (다중 장착 지원)
+        // 아이템 위치/크기 조절
         function moveItem(axis, amount) {
             if (!selectedShopItem || selectedShopItem.type === 'color') return;
-            
-            const key = selectedShopItem.type;
-            let targetOffset;
+            const targetOffset = previewAvatar[selectedShopItem.type][selectedShopItem.index];
+            if(!targetOffset) return;
 
-            if (key === 'accs') {
-                targetOffset = previewAvatar.accs[selectedShopItem.index];
-            } else {
-                targetOffset = previewAvatar.offsets[key];
-            }
-            
             if (axis === 'x') targetOffset.x += amount;
             if (axis === 'y') targetOffset.y += amount;
             if (axis === 's') targetOffset.s = Math.max(0.5, targetOffset.s + amount);
@@ -1244,10 +1224,10 @@
             updateBuyButton(); 
         }
 
-        // 장식 빼기 기능
-        function removeSelectedAcc() {
-            if (selectedShopItem && selectedShopItem.type === 'accs') {
-                previewAvatar.accs.splice(selectedShopItem.index, 1);
+        // 개별 아이템 삭제
+        function removeSelectedItem() {
+            if (selectedShopItem && selectedShopItem.type !== 'color') {
+                previewAvatar[selectedShopItem.type].splice(selectedShopItem.index, 1);
                 selectedShopItem = null;
                 applyPreviewAvatar();
                 renderShop();
@@ -1261,25 +1241,15 @@
             const posCtrl = document.getElementById('position-controls');
             const removeBtn = document.getElementById('btn-remove-acc');
 
-            let hasActiveItem = false;
+            let hasActiveItem = (selectedShopItem && selectedShopItem.type !== 'color');
             
-            if (currentShopTab === 'accs') {
-                if (selectedShopItem && selectedShopItem.type === 'accs') {
-                    hasActiveItem = true;
-                    removeBtn.classList.remove('hidden');
-                } else {
-                    removeBtn.classList.add('hidden');
-                }
+            if (hasActiveItem) {
+                posCtrl.classList.remove('hidden');
+                removeBtn.classList.remove('hidden');
             } else {
+                posCtrl.classList.add('hidden');
                 removeBtn.classList.add('hidden');
-                let activeKey = currentShopTab === 'colors' ? 'color' : (currentShopTab === 'hats' ? 'hat' : 'face');
-                if (activeKey !== 'color' && previewAvatar[activeKey] !== '') {
-                    hasActiveItem = true;
-                }
             }
-
-            if (hasActiveItem) posCtrl.classList.remove('hidden');
-            else posCtrl.classList.add('hidden');
 
             const isChanged = JSON.stringify(previewAvatar) !== JSON.stringify(myAvatar);
 
@@ -1311,16 +1281,16 @@
                     };
                 } else {
                     btn.className = "game-btn w-full bg-rose-400 text-white font-game text-xl py-4 rounded-xl mt-4 opacity-70 cursor-not-allowed";
-                    btn.onclick = () => showToast("코인이 부족합니다! 문제를 풀고 코인을 모아보세요.", true);
+                    btn.onclick = () => showToast("코인이 부족합니다! 학습을 진행하여 코인을 모아보세요.", true);
                 }
             } else if (isChanged) {
-                btn.innerText = "💾 장착 및 위치 저장";
+                btn.innerText = "💾 추가 및 위치 저장";
                 btn.className = "game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-game text-xl py-4 rounded-xl mt-4 pop-in";
                 btn.onclick = savePreviewToAvatar;
             } else {
-                btn.innerText = "✔️ 현재 착용 중";
-                btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-game text-xl py-4 rounded-xl mt-4 cursor-not-allowed";
-                btn.onclick = null;
+                btn.innerText = "✔️ 편집 완료 (선택 해제)";
+                btn.className = "game-btn w-full bg-slate-200 text-slate-500 font-game text-xl py-4 rounded-xl mt-4";
+                btn.onclick = () => { selectedShopItem = null; renderShop(); updateBuyButton(); };
             }
         }
 
@@ -1335,23 +1305,27 @@
             const btn = document.getElementById('btn-buy-equip');
             btn.innerText = "저장 완료! ✨";
             btn.className = "game-btn w-full bg-emerald-400 text-emerald-900 font-game text-xl py-4 rounded-xl mt-4";
-            selectedShopItem = null; // 저장 후 선택 해제
+            selectedShopItem = null; 
             setTimeout(() => { updateBuyButton(); }, 1500);
         }
 
         function getAvatarHTML(avatarObj) {
-            const off = avatarObj.offsets;
             let html = '';
-            // 여러개 장식 렌더링
             if(avatarObj.accs && avatarObj.accs.length > 0) {
                 avatarObj.accs.forEach(a => {
                     html += `<div style="position:absolute; top:${a.y}%; left:${a.x}%; transform: scale(${a.s}); z-index:10; pointer-events:none; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));">${a.icon}</div>`;
                 });
             }
-            // 일반 모자, 얼굴
-            if(avatarObj.face) html += `<div style="position:absolute; top:${off.face.y}%; left:${off.face.x}%; transform: scale(${off.face.s}); z-index:15; pointer-events:none; filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.2));">${avatarObj.face}</div>`;
-            if(avatarObj.hat) html += `<div style="position:absolute; top:${off.hat.y}%; left:${off.hat.x}%; transform: scale(${off.hat.s}); z-index:20; pointer-events:none; filter: drop-shadow(0px 3px 0px rgba(0,0,0,0.3));">${avatarObj.hat}</div>`;
-            
+            if(avatarObj.faces && avatarObj.faces.length > 0) {
+                avatarObj.faces.forEach(a => {
+                    html += `<div style="position:absolute; top:${a.y}%; left:${a.x}%; transform: scale(${a.s}); z-index:15; pointer-events:none; filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.2));">${a.icon}</div>`;
+                });
+            }
+            if(avatarObj.hats && avatarObj.hats.length > 0) {
+                avatarObj.hats.forEach(a => {
+                    html += `<div style="position:absolute; top:${a.y}%; left:${a.x}%; transform: scale(${a.s}); z-index:20; pointer-events:none; filter: drop-shadow(0px 3px 0px rgba(0,0,0,0.3));">${a.icon}</div>`;
+                });
+            }
             return html;
         }
 
@@ -1370,10 +1344,6 @@
             const combinedHTML = getAvatarHTML(myAvatar);
             document.getElementById('mini-item').innerHTML = combinedHTML;
         }
-
-        ['input-id', 'input-name'].forEach(inputId => document.getElementById(inputId).addEventListener('keydown', event => {
-            if (event.key === 'Enter') login();
-        }));
     </script>
 </body>
 </html>
