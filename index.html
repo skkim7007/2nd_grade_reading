@@ -820,16 +820,19 @@
                     coins = p.coins || 0;
                     myAvatar = p.avatar || { color: '#a7f3d0', hats: [], faces: [], accs: [] };
                     purchasedItems = p.purchased || [];
+                    
+                    if(!myAvatar.hats) myAvatar.hats = [];
+                    if(!myAvatar.faces) myAvatar.faces = [];
+                    if(!myAvatar.accs) myAvatar.accs = [];
                 } catch(e) {
                     coins = 0; myAvatar = { color: '#a7f3d0', hats: [], faces: [], accs: [] }; purchasedItems = [];
                 }
             } else {
+                // 처음 접속하는 학생인 경우 모든 상태를 완전히 초기화
+                coins = 0;
                 myAvatar = { color: '#a7f3d0', hats: [], faces: [], accs: [] };
                 purchasedItems = [];
             }
-            if(!myAvatar.hats) myAvatar.hats = [];
-            if(!myAvatar.faces) myAvatar.faces = [];
-            if(!myAvatar.accs) myAvatar.accs = [];
             updateCoinDisplay();
             applyAvatar();
         }
