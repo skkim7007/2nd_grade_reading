@@ -242,6 +242,7 @@
                 <div class="mb-8 text-left">
                     <label for="input-new-pw" class="block text-slate-700 font-bold mb-2 ml-1">새로운 비밀번호 (숫자 4자리 등)</label>
                     <input type="password" id="input-new-pw" class="w-full border-4 border-slate-800 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-indigo-500 transition-colors" placeholder="비밀번호 입력" autocomplete="off" onkeypress="if(event.key==='Enter') registerAndLogin();">
+                    <p class="text-xs text-rose-500 mt-1 ml-1 font-bold">※ 선생님이 확인할 수 있으니, 평소 사용하는 중요한 비밀번호 말고 다른 것으로 적어주세요!</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="resetLoginUI()" class="game-btn flex-1 bg-slate-200 text-slate-700 font-game text-xl py-4 rounded-xl">뒤로</button>
@@ -464,10 +465,10 @@
                 <button id="btn-hint" onclick="showHint()" class="hidden game-btn flex-1 bg-amber-400 hover:bg-amber-500 text-amber-900 font-game text-xl py-4 rounded-xl">
                     <i class="fas fa-search"></i> 힌트 보기
                 </button>
-                <button id="btn-check" onclick="checkAnswer()" class="game-btn flex-[2] bg-indigo-500 hover:bg-indigo-600 text-white font-game text-2xl py-4 rounded-xl">
+                <button id="btn-check" onclick="checkAnswer()" class="game-btn flex-[2] bg-indigo-500 hover:bg-indigo-600 text-white font-game text-xl py-4 rounded-xl">
                     정답 확인 <i class="fas fa-check"></i>
                 </button>
-                <button id="btn-next" onclick="nextQuestion()" class="hidden game-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-game text-2xl py-4 rounded-xl">
+                <button id="btn-next" onclick="nextQuestion()" class="hidden game-btn flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-game text-xl py-4 rounded-xl">
                     다음으로 <i class="fas fa-arrow-right ml-1"></i>
                 </button>
             </div>
